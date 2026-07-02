@@ -78,6 +78,17 @@ export function DestinationsEditor({
   const update = (i: number, patch: Partial<Row>) =>
     setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
 
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const move = (from: number, to: number) =>
+    setRows((rs) => {
+      if (from === to || from < 0 || to < 0 || from >= rs.length || to >= rs.length)
+        return rs;
+      const copy = [...rs];
+      const [picked] = copy.splice(from, 1);
+      copy.splice(to, 0, picked);
+      return copy;
+    });
+
   const matched = rows.map((r) => {
     const co = masters.find((m) => m.name === r.country.trim());
     const ci = co?.cities.find((c) => c.name === r.city.trim());
@@ -129,7 +140,19 @@ export function DestinationsEditor({
         return (
           <div
             key={i}
-            className="space-y-2 rounded-xl border border-sky-100 bg-sky-50/50 p-3"
+            onDragOver={(e) => {
+              e.preventDefault();
+              if (dragIndex != null && dragIndex !== i) {
+                move(dragIndex, i);
+                setDragIndex(i);
+              }
+            }}
+            onDrop={(e) => e.preventDefault()}
+            className={`space-y-2 rounded-xl border bg-sky-50/50 p-3 transition ${
+              dragIndex === i
+                ? "border-sky-400 opacity-60 shadow-lg"
+                : "border-sky-100"
+            }`}
           >
             <datalist id={cityListId}>
               {co?.cities.map((c) => (
@@ -137,6 +160,15 @@ export function DestinationsEditor({
               ))}
             </datalist>
             <div className="flex flex-wrap items-center gap-2">
+              <span
+                draggable
+                onDragStart={() => setDragIndex(i)}
+                onDragEnd={() => setDragIndex(null)}
+                title="ドラッグで並び替え"
+                className="cursor-grab select-none text-sm font-bold text-sky-300 active:cursor-grabbing"
+              >
+                ⠿
+              </span>
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-500 text-xs font-bold text-white">
                 {i + 1}
               </span>
@@ -176,14 +208,34 @@ export function DestinationsEditor({
                 <Badge isNew={!ci} filled={r.city.trim() !== ""} />
               </div>
               {rows.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}
-                  className="rounded-full px-2 py-1 text-xs font-bold text-slate-400 transition hover:bg-rose-50 hover:text-rose-500"
-                  title="この行き先を削除"
-                >
-                  ✕
-                </button>
+                <span className="ml-auto flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => move(i, i - 1)}
+                    disabled={i === 0}
+                    className="rounded-full px-1.5 py-1 text-xs font-bold text-sky-400 transition hover:bg-sky-100 disabled:opacity-30"
+                    title="上へ"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => move(i, i + 1)}
+                    disabled={i === rows.length - 1}
+                    className="rounded-full px-1.5 py-1 text-xs font-bold text-sky-400 transition hover:bg-sky-100 disabled:opacity-30"
+                    title="下へ"
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))}
+                    className="rounded-full px-2 py-1 text-xs font-bold text-slate-400 transition hover:bg-rose-50 hover:text-rose-500"
+                    title="この行き先を削除"
+                  >
+                    ✕
+                  </button>
+                </span>
               )}
             </div>
             <div className="flex flex-wrap items-center gap-2 pl-8 text-xs">

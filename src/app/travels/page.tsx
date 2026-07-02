@@ -38,7 +38,7 @@ export default async function TravelsPage() {
     .from(travelDestinations)
     .innerJoin(countries, eq(travelDestinations.countryId, countries.id))
     .leftJoin(cities, eq(travelDestinations.cityId, cities.id))
-    .orderBy(asc(travelDestinations.id));
+    .orderBy(asc(travelDestinations.sortOrder), asc(travelDestinations.id));
 
   const destsByTravel = new Map<number, typeof destRows>();
   for (const d of destRows) {
@@ -101,7 +101,7 @@ export default async function TravelsPage() {
     destinationText: destText(t.id),
   }));
 
-  // 座標を持つ行き先を到着日順(なければ登録順)に並べて経路にする
+  // 座標を持つ行き先を並び順(sort_order)どおりに経路にする
   const routes = rows
     .map((t) => {
       const stops = (destsByTravel.get(t.id) ?? [])
@@ -123,12 +123,7 @@ export default async function TravelsPage() {
         arrivedOn: string | null;
         leftOn: string | null;
       }[];
-      const sorted = stops.every((d) => d.arrivedOn)
-        ? [...stops].sort((a, b) =>
-            (a.arrivedOn as string).localeCompare(b.arrivedOn as string),
-          )
-        : stops;
-      return { travelId: t.id, title: t.title, stops: sorted };
+      return { travelId: t.id, title: t.title, stops };
     })
     .filter((r) => r.stops.length > 0);
 

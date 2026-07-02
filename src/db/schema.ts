@@ -51,6 +51,7 @@ export const travelDestinations = sqliteTable("travel_destinations", {
     .notNull()
     .references(() => countries.id),
   cityId: integer("city_id").references(() => cities.id),
+  sortOrder: integer("sort_order").notNull().default(0),
   arrivedOn: text("arrived_on"),
   leftOn: text("left_on"),
 });

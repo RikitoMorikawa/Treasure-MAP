@@ -27,7 +27,7 @@ export default async function EditTravelPage({
     .select()
     .from(travelDestinations)
     .where(eq(travelDestinations.travelId, numId))
-    .orderBy(asc(travelDestinations.id));
+    .orderBy(asc(travelDestinations.sortOrder), asc(travelDestinations.id));
 
   const countryRows = await db
     .select()

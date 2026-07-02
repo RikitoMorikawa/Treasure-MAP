@@ -69,6 +69,7 @@ async function resolveDestinations(
   const out: {
     countryId: number;
     cityId: number | null;
+    sortOrder: number;
     arrivedOn: string | null;
     leftOn: string | null;
   }[] = [];
@@ -137,6 +138,7 @@ async function resolveDestinations(
     out.push({
       countryId,
       cityId: cityId ?? null,
+      sortOrder: out.length, // フォームの表示順をそのまま保存
       arrivedOn: d.arrivedOn,
       leftOn: d.leftOn,
     });
