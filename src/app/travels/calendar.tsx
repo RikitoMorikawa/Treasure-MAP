@@ -39,7 +39,7 @@ export function TravelCalendar({
   while (cells.length % 7 !== 0) cells.push(null);
 
   return (
-    <div className="rounded-2xl border border-sky-100 bg-white/80 p-5 shadow-lg shadow-sky-100 backdrop-blur">
+    <div className="rounded-2xl border-2 border-sky-200 bg-white p-5 shadow-md">
       <div className="mb-4 flex items-center justify-between">
         <Link
           href={`/travels?month=${prev}`}
@@ -82,10 +82,10 @@ export function TravelCalendar({
               key={i}
               className={`min-h-14 rounded-lg border p-1 text-left align-top ${
                 isToday
-                  ? "border-amber-300 bg-amber-50"
+                  ? "border-amber-400 bg-amber-50"
                   : dayTravels.length > 0
-                    ? "border-sky-200 bg-sky-50"
-                    : "border-slate-100 bg-white"
+                    ? "border-sky-400 bg-sky-100"
+                    : "border-slate-200 bg-slate-50"
               }`}
             >
               <span

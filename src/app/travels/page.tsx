@@ -28,20 +28,20 @@ export default async function TravelsPage({
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight">
-          ✈️ <span className="bg-gradient-to-r from-sky-500 to-blue-500 bg-clip-text text-transparent">旅行記録</span>
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
+      <div className="rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-5 text-white shadow-lg shadow-sky-200">
+        <h1 className="text-2xl font-extrabold tracking-tight">✈️ 旅行記録</h1>
+        <p className="mt-1 text-sm text-sky-100">
           行った場所と思い出を記録します。
         </p>
       </div>
 
       <form
         action={addTravel}
-        className="space-y-4 rounded-2xl border border-sky-100 bg-white/80 p-6 shadow-lg shadow-sky-100 backdrop-blur"
+        className="space-y-4 rounded-2xl border-2 border-sky-200 bg-white p-6 shadow-md"
       >
-        <h2 className="font-bold text-sky-700">＋ 新しい記録を追加</h2>
+        <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
+          ＋ 新しい記録を追加
+        </h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block text-sm">
             <span className="mb-1 block font-semibold text-slate-600">
@@ -95,19 +95,21 @@ export default async function TravelsPage({
       </form>
 
       <section className="space-y-3">
-        <h2 className="font-bold text-slate-600">🗓 カレンダー</h2>
+        <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
+          🗓 カレンダー
+        </h2>
         <TravelCalendar month={month} travels={monthTravels} />
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-bold text-slate-600">
+        <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
           記録一覧
-          <span className="ml-2 rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-semibold text-sky-700">
+          <span className="ml-2 rounded-full bg-sky-500 px-2.5 py-0.5 text-xs font-bold text-white">
             {rows.length}件
           </span>
         </h2>
         {rows.length === 0 ? (
-          <p className="rounded-2xl border-2 border-dashed border-sky-200 bg-white/50 p-8 text-center text-sm text-slate-400">
+          <p className="rounded-2xl border-2 border-dashed border-sky-300 bg-white p-8 text-center text-sm text-slate-500">
             まだ記録がありません。最初の旅行を追加しましょう 🌏
           </p>
         ) : (
@@ -115,7 +117,7 @@ export default async function TravelsPage({
             {rows.map((t) => (
               <li
                 key={t.id}
-                className="flex items-start justify-between gap-4 rounded-2xl border border-sky-100 bg-white/80 p-5 shadow-sm backdrop-blur transition hover:shadow-md"
+                className="flex items-start justify-between gap-4 rounded-2xl border-2 border-sky-200 bg-white p-5 shadow-md transition hover:border-sky-400 hover:shadow-lg"
               >
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -124,7 +126,7 @@ export default async function TravelsPage({
                       📍 {t.destination}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs font-medium text-slate-400">
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
                     🗓 {t.visitedOn}
                   </p>
                   {t.memo && (
@@ -137,7 +139,7 @@ export default async function TravelsPage({
                   <input type="hidden" name="id" value={t.id} />
                   <button
                     type="submit"
-                    className="rounded-full px-2 py-1 text-xs text-slate-300 transition hover:bg-rose-50 hover:text-rose-500"
+                    className="rounded-full px-2 py-1 text-xs text-slate-500 transition hover:bg-rose-50 hover:text-rose-500"
                   >
                     削除
                   </button>
