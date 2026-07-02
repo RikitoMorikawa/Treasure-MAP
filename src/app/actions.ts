@@ -23,8 +23,13 @@ function travelValues(formData: FormData) {
   };
 }
 
-// hidden input "destinations" の JSON: [{ country, cities: [] }, ...]
+// hidden input "destinations" の JSON:
+// [{ country, cities: [], arrivedOn, leftOn }, ...]
 function parseDestinations(formData: FormData) {
+  const date = (v: unknown) => {
+    const s = String(v ?? "").trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+  };
   try {
     const raw = JSON.parse(String(formData.get("destinations") ?? "[]"));
     if (!Array.isArray(raw)) return [];
@@ -34,6 +39,8 @@ function parseDestinations(formData: FormData) {
         cities: Array.isArray(d?.cities)
           ? d.cities.map((c: unknown) => String(c).trim()).filter(Boolean)
           : [],
+        arrivedOn: date(d?.arrivedOn),
+        leftOn: date(d?.leftOn),
       }))
       .filter((d) => d.country);
   } catch {
@@ -41,17 +48,52 @@ function parseDestinations(formData: FormData) {
   }
 }
 
+// 国・都市名から座標を取得(世界対応のため Nominatim を使用)
+async function geocodeDestination(
+  country: string,
+  city?: string,
+): Promise<{ latitude: number; longitude: number } | null> {
+  const q = city ? `${city}, ${country}` : country;
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=ja&q=${encodeURIComponent(q)}`,
+      { headers: { "User-Agent": "treasure-map-personal-app" } },
+    );
+    const results: { lat: string; lon: string }[] = await res.json();
+    if (!results[0]) return null;
+    return {
+      latitude: Number(results[0].lat),
+      longitude: Number(results[0].lon),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function geocodeAll(dests: ReturnType<typeof parseDestinations>) {
+  const out = [];
+  for (const d of dests) {
+    // 都市があれば最初の都市で、なければ国名でピンを立てる
+    const coords =
+      (await geocodeDestination(d.country, d.cities[0])) ??
+      (d.cities[0] ? await geocodeDestination(d.country) : null);
+    out.push({ ...d, ...(coords ?? { latitude: null, longitude: null }) });
+  }
+  return out;
+}
+
 export async function addTravel(formData: FormData) {
   const values = travelValues(formData);
   const dests = parseDestinations(formData);
   if (!values || dests.length === 0) return;
+  const located = await geocodeAll(dests);
   const [row] = await db
     .insert(travels)
     .values(values)
     .returning({ id: travels.id });
   await db
     .insert(travelDestinations)
-    .values(dests.map((d) => ({ ...d, travelId: row.id })));
+    .values(located.map((d) => ({ ...d, travelId: row.id })));
   revalidatePath("/travels");
 }
 
@@ -60,13 +102,14 @@ export async function updateTravel(formData: FormData) {
   const values = travelValues(formData);
   const dests = parseDestinations(formData);
   if (!Number.isInteger(id) || !values || dests.length === 0) return;
+  const located = await geocodeAll(dests);
   await db.update(travels).set(values).where(eq(travels.id, id));
   await db
     .delete(travelDestinations)
     .where(eq(travelDestinations.travelId, id));
   await db
     .insert(travelDestinations)
-    .values(dests.map((d) => ({ ...d, travelId: id })));
+    .values(located.map((d) => ({ ...d, travelId: id })));
   revalidatePath("/travels");
   redirect("/travels");
 }

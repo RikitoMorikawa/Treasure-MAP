@@ -5,6 +5,7 @@ import { travelDestinations, travels } from "@/db/schema";
 import { addTravel, deleteTravel } from "@/app/actions";
 import { TravelCalendar } from "./calendar";
 import { TravelForm } from "./travel-form";
+import { TravelRouteMap } from "./client-widgets";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,33 @@ export default async function TravelsPage() {
     destinationText: destText(t.id),
   }));
 
+  // 座標を持つ行き先を到着日順(なければ登録順)に並べて経路にする
+  const routes = rows
+    .map((t) => {
+      const stops = (destsByTravel.get(t.id) ?? []).filter(
+        (d) => d.latitude != null && d.longitude != null,
+      );
+      const sorted = stops.every((d) => d.arrivedOn)
+        ? [...stops].sort((a, b) =>
+            (a.arrivedOn as string).localeCompare(b.arrivedOn as string),
+          )
+        : stops;
+      return {
+        travelId: t.id,
+        title: t.title,
+        stops: sorted.map((d) => ({
+          id: d.id,
+          country: d.country,
+          cities: d.cities,
+          lat: d.latitude as number,
+          lng: d.longitude as number,
+          arrivedOn: d.arrivedOn,
+          leftOn: d.leftOn,
+        })),
+      };
+    })
+    .filter((r) => r.stops.length > 0);
+
   return (
     <div className="space-y-8">
       <div className="rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-5 text-white shadow-lg shadow-sky-200">
@@ -50,6 +78,18 @@ export default async function TravelsPage() {
           行った場所と思い出を記録します。
         </p>
       </div>
+
+      <section className="space-y-3">
+        <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
+          🗺 旅の経路マップ
+          <span className="ml-2 rounded-full bg-sky-500 px-2.5 py-0.5 text-xs font-bold text-white">
+            {routes.length}旅
+          </span>
+        </h2>
+        <div className="overflow-hidden rounded-2xl border-2 border-sky-200 shadow-md">
+          <TravelRouteMap routes={routes} />
+        </div>
+      </section>
 
       <section className="space-y-3">
         <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
@@ -95,6 +135,12 @@ export default async function TravelsPage() {
                         {d.cities.length > 0 && (
                           <span className="font-normal text-sky-500">
                             ({d.cities.join("、")})
+                          </span>
+                        )}
+                        {(d.arrivedOn || d.leftOn) && (
+                          <span className="ml-1 font-normal text-sky-400">
+                            {d.arrivedOn?.slice(5).replace("-", "/")}→
+                            {d.leftOn?.slice(5).replace("-", "/")}
                           </span>
                         )}
                       </span>

@@ -1,5 +1,8 @@
 import type { Travel } from "@/db/schema";
-import { DestinationsEditor } from "./destinations-editor";
+import {
+  DestinationsEditor,
+  type DestinationInput,
+} from "./destinations-editor";
 
 export function TravelForm({
   action,
@@ -9,7 +12,7 @@ export function TravelForm({
 }: {
   action: (formData: FormData) => Promise<void>;
   travel?: Travel;
-  destinations?: { country: string; cities: string[] }[];
+  destinations?: DestinationInput[];
   submitLabel: string;
 }) {
   return (

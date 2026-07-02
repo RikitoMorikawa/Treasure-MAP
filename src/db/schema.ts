@@ -13,6 +13,7 @@ export const travels = sqliteTable("travels", {
 });
 
 // 旅行 1件 : 国 n件。都市はさらに国ごとに n 件(JSON 配列で保持)
+// 座標は保存時に国・都市名から自動ジオコーディングして経路表示に使う
 export const travelDestinations = sqliteTable("travel_destinations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   travelId: integer("travel_id")
@@ -20,6 +21,10 @@ export const travelDestinations = sqliteTable("travel_destinations", {
     .references(() => travels.id, { onDelete: "cascade" }),
   country: text("country").notNull(),
   cities: text("cities", { mode: "json" }).$type<string[]>().notNull(),
+  arrivedOn: text("arrived_on"),
+  leftOn: text("left_on"),
+  latitude: real("latitude"),
+  longitude: real("longitude"),
 });
 
 export const climbs = sqliteTable("climbs", {

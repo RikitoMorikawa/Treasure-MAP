@@ -42,6 +42,8 @@ export default async function EditTravelPage({
         destinations={dests.map((d) => ({
           country: d.country,
           cities: d.cities,
+          arrivedOn: d.arrivedOn,
+          leftOn: d.leftOn,
         }))}
         submitLabel="更新する"
       />
