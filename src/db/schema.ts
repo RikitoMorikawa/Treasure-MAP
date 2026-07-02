@@ -16,7 +16,11 @@ export const climbs = sqliteTable("climbs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   mountainName: text("mountain_name").notNull(),
   elevation: integer("elevation"),
-  courseConstant: real("course_constant"),
+  courseConstantMin: real("course_constant_min"),
+  courseConstantMax: real("course_constant_max"),
+  weather: text("weather"),
+  latitude: real("latitude"),
+  longitude: real("longitude"),
   climbedOn: text("climbed_on").notNull(),
   memo: text("memo"),
   createdAt: text("created_at")

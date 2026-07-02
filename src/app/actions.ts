@@ -30,23 +30,34 @@ export async function deleteTravel(formData: FormData) {
 }
 
 export async function addClimb(formData: FormData) {
+  const num = (name: string) => {
+    const raw = String(formData.get(name) ?? "").trim();
+    if (!raw) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  };
+
   const mountainName = String(formData.get("mountainName") ?? "").trim();
-  const elevationRaw = String(formData.get("elevation") ?? "").trim();
-  const courseConstantRaw = String(formData.get("courseConstant") ?? "").trim();
   const climbedOn = String(formData.get("climbedOn") ?? "").trim();
+  const weather = String(formData.get("weather") ?? "").trim();
   const memo = String(formData.get("memo") ?? "").trim();
 
   if (!mountainName || !climbedOn) return;
 
-  const elevation = elevationRaw ? Number(elevationRaw) : null;
-  const courseConstant = courseConstantRaw ? Number(courseConstantRaw) : null;
+  let ccMin = num("courseConstantMin");
+  let ccMax = num("courseConstantMax");
+  if (ccMin != null && ccMax != null && ccMax < ccMin) {
+    [ccMin, ccMax] = [ccMax, ccMin];
+  }
 
   await db.insert(climbs).values({
     mountainName,
-    elevation: Number.isFinite(elevation as number) ? elevation : null,
-    courseConstant: Number.isFinite(courseConstant as number)
-      ? courseConstant
-      : null,
+    elevation: num("elevation"),
+    courseConstantMin: ccMin,
+    courseConstantMax: ccMax,
+    weather: weather || null,
+    latitude: num("latitude"),
+    longitude: num("longitude"),
     climbedOn,
     memo: memo || null,
   });
