@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import type { Travel } from "@/db/schema";
+type CalendarTravel = {
+  id: number;
+  title: string;
+  departedOn: string;
+  returnedOn: string | null;
+  destinationText: string;
+};
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
@@ -9,7 +15,7 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-function travelEnd(t: Travel) {
+function travelEnd(t: CalendarTravel) {
   return t.returnedOn ?? t.departedOn;
 }
 
@@ -21,7 +27,7 @@ function MiniMonth({
 }: {
   year: number;
   mon: number;
-  travels: Travel[];
+  travels: CalendarTravel[];
   today: string;
 }) {
   const month = `${year}-${pad(mon)}`;
@@ -69,7 +75,7 @@ function MiniMonth({
                   ? dayTravels
                       .map(
                         (t) =>
-                          `✈️ ${t.title}(${t.destination})${t.departedOn}〜${travelEnd(t)}`,
+                          `✈️ ${t.title}(${t.destinationText})${t.departedOn}〜${travelEnd(t)}`,
                       )
                       .join("\n")
                   : undefined
@@ -93,7 +99,7 @@ export function TravelCalendar({
   travels,
   initialYear,
 }: {
-  travels: Travel[];
+  travels: CalendarTravel[];
   initialYear: number;
 }) {
   const [year, setYear] = useState(initialYear);
@@ -161,7 +167,7 @@ export function TravelCalendar({
             <li key={t.id} className="flex flex-wrap items-center gap-2 text-xs">
               <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-gradient-to-br from-sky-400 to-blue-500" />
               <span className="font-bold text-slate-700">✈️ {t.title}</span>
-              <span className="text-slate-500">({t.destination})</span>
+              <span className="text-slate-500">({t.destinationText})</span>
               <span className="font-semibold text-sky-600">
                 {t.departedOn}
                 {travelEnd(t) !== t.departedOn ? ` 〜 ${travelEnd(t)}` : ""}

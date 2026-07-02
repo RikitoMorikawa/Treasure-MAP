@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { desc } from "drizzle-orm";
 import { db } from "@/db";
-import { travels } from "@/db/schema";
+import { travelDestinations, travels } from "@/db/schema";
 import { addTravel, deleteTravel } from "@/app/actions";
 import { TravelCalendar } from "./calendar";
 import { TravelForm } from "./travel-form";
@@ -19,6 +19,28 @@ export default async function TravelsPage() {
     .select()
     .from(travels)
     .orderBy(desc(travels.departedOn), desc(travels.id));
+
+  const destRows = await db.select().from(travelDestinations);
+  const destsByTravel = new Map<number, typeof destRows>();
+  for (const d of destRows) {
+    const list = destsByTravel.get(d.travelId) ?? [];
+    list.push(d);
+    destsByTravel.set(d.travelId, list);
+  }
+  const destText = (id: number) =>
+    (destsByTravel.get(id) ?? [])
+      .map((d) =>
+        d.cities.length > 0 ? `${d.country}(${d.cities.join("、")})` : d.country,
+      )
+      .join(" / ") || "—";
+
+  const calendarTravels = rows.map((t) => ({
+    id: t.id,
+    title: t.title,
+    departedOn: t.departedOn,
+    returnedOn: t.returnedOn,
+    destinationText: destText(t.id),
+  }));
 
   return (
     <div className="space-y-8">
@@ -40,7 +62,7 @@ export default async function TravelsPage() {
         <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
           🗓 カレンダー
         </h2>
-        <TravelCalendar initialYear={currentYear} travels={rows} />
+        <TravelCalendar initialYear={currentYear} travels={calendarTravels} />
       </section>
 
       <section className="space-y-3">
@@ -64,9 +86,19 @@ export default async function TravelsPage() {
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-bold">{t.title}</span>
-                    <span className="rounded-full bg-gradient-to-r from-sky-100 to-blue-100 px-2.5 py-0.5 text-xs font-semibold text-sky-700">
-                      📍 {t.destination}
-                    </span>
+                    {(destsByTravel.get(t.id) ?? []).map((d) => (
+                      <span
+                        key={d.id}
+                        className="rounded-full bg-gradient-to-r from-sky-100 to-blue-100 px-2.5 py-0.5 text-xs font-semibold text-sky-700"
+                      >
+                        📍 {d.country}
+                        {d.cities.length > 0 && (
+                          <span className="font-normal text-sky-500">
+                            ({d.cities.join("、")})
+                          </span>
+                        )}
+                      </span>
+                    ))}
                   </div>
                   <p className="mt-1 text-xs font-semibold text-slate-500">
                     🗓 {t.departedOn}

@@ -1,12 +1,15 @@
 import type { Travel } from "@/db/schema";
+import { DestinationsEditor } from "./destinations-editor";
 
 export function TravelForm({
   action,
   travel,
+  destinations,
   submitLabel,
 }: {
   action: (formData: FormData) => Promise<void>;
   travel?: Travel;
+  destinations?: { country: string; cities: string[] }[];
   submitLabel: string;
 }) {
   return (
@@ -25,18 +28,6 @@ export function TravelForm({
             required
             defaultValue={travel?.title}
             placeholder="夏の北海道旅行"
-            className="w-full rounded-xl border border-sky-200 bg-white px-3 py-2 transition focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:outline-none"
-          />
-        </label>
-        <label className="block text-sm">
-          <span className="mb-1 block font-semibold text-slate-600">
-            行き先 <span className="text-rose-400">*</span>
-          </span>
-          <input
-            name="destination"
-            required
-            defaultValue={travel?.destination}
-            placeholder="北海道・札幌"
             className="w-full rounded-xl border border-sky-200 bg-white px-3 py-2 transition focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:outline-none"
           />
         </label>
@@ -64,6 +55,7 @@ export function TravelForm({
           />
         </label>
       </div>
+      <DestinationsEditor initial={destinations} />
       <label className="block text-sm">
         <span className="mb-1 block font-semibold text-slate-600">メモ</span>
         <textarea

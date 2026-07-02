@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { travels } from "@/db/schema";
+import { travelDestinations, travels } from "@/db/schema";
 import { updateTravel } from "@/app/actions";
 import { TravelForm } from "../../travel-form";
 
@@ -23,6 +23,11 @@ export default async function EditTravelPage({
     .where(eq(travels.id, numId));
   if (!travel) notFound();
 
+  const dests = await db
+    .select()
+    .from(travelDestinations)
+    .where(eq(travelDestinations.travelId, numId));
+
   return (
     <div className="space-y-6">
       <div className="rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-5 text-white shadow-lg shadow-sky-200">
@@ -34,6 +39,10 @@ export default async function EditTravelPage({
       <TravelForm
         action={updateTravel}
         travel={travel}
+        destinations={dests.map((d) => ({
+          country: d.country,
+          cities: d.cities,
+        }))}
         submitLabel="更新する"
       />
       <Link
