@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { desc } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { travelDestinations, travels } from "@/db/schema";
+import { cities, countries, travelDestinations, travels } from "@/db/schema";
 import { addTravel, deleteTravel } from "@/app/actions";
 import { TravelCalendar } from "./calendar";
 import { TravelForm } from "./travel-form";
@@ -21,19 +21,61 @@ export default async function TravelsPage() {
     .from(travels)
     .orderBy(desc(travels.departedOn), desc(travels.id));
 
-  const destRows = await db.select().from(travelDestinations);
+  // 行き先(マスター JOIN 済み)。座標は都市優先、なければ国の代表点
+  const destRows = await db
+    .select({
+      id: travelDestinations.id,
+      travelId: travelDestinations.travelId,
+      arrivedOn: travelDestinations.arrivedOn,
+      leftOn: travelDestinations.leftOn,
+      country: countries.name,
+      city: cities.name,
+      cityLat: cities.latitude,
+      cityLng: cities.longitude,
+      countryLat: countries.latitude,
+      countryLng: countries.longitude,
+    })
+    .from(travelDestinations)
+    .innerJoin(countries, eq(travelDestinations.countryId, countries.id))
+    .leftJoin(cities, eq(travelDestinations.cityId, cities.id))
+    .orderBy(asc(travelDestinations.id));
+
   const destsByTravel = new Map<number, typeof destRows>();
   for (const d of destRows) {
     const list = destsByTravel.get(d.travelId) ?? [];
     list.push(d);
     destsByTravel.set(d.travelId, list);
   }
-  const destText = (id: number) =>
-    (destsByTravel.get(id) ?? [])
-      .map((d) =>
-        d.cities.length > 0 ? `${d.country}(${d.cities.join("、")})` : d.country,
-      )
-      .join(" / ") || "—";
+  // 「フランス(パリ、ニース)/ イタリア(ローマ)」形式のテキスト
+  const destText = (id: number) => {
+    const grouped = new Map<string, string[]>();
+    for (const d of destsByTravel.get(id) ?? []) {
+      const list = grouped.get(d.country) ?? [];
+      if (d.city && !list.includes(d.city)) list.push(d.city);
+      grouped.set(d.country, list);
+    }
+    return (
+      [...grouped.entries()]
+        .map(([country, cs]) =>
+          cs.length > 0 ? `${country}(${cs.join("、")})` : country,
+        )
+        .join(" / ") || "—"
+    );
+  };
+
+  // フォーム用マスター(国 → 都市)
+  const countryRows = await db
+    .select()
+    .from(countries)
+    .orderBy(asc(countries.name));
+  const cityRows = await db.select().from(cities).orderBy(asc(cities.name));
+  const masters = countryRows.map((co) => ({
+    id: co.id,
+    name: co.name,
+    cities: cityRows
+      .filter((ci) => ci.countryId === co.id)
+      .map((ci) => ({ id: ci.id, name: ci.name })),
+  }));
 
   const calendarTravels = rows.map((t) => ({
     id: t.id,
@@ -46,27 +88,31 @@ export default async function TravelsPage() {
   // 座標を持つ行き先を到着日順(なければ登録順)に並べて経路にする
   const routes = rows
     .map((t) => {
-      const stops = (destsByTravel.get(t.id) ?? []).filter(
-        (d) => d.latitude != null && d.longitude != null,
-      );
+      const stops = (destsByTravel.get(t.id) ?? [])
+        .map((d) => ({
+          id: d.id,
+          country: d.country,
+          cities: d.city ? [d.city] : [],
+          lat: d.cityLat ?? d.countryLat,
+          lng: d.cityLng ?? d.countryLng,
+          arrivedOn: d.arrivedOn,
+          leftOn: d.leftOn,
+        }))
+        .filter((d) => d.lat != null && d.lng != null) as {
+        id: number;
+        country: string;
+        cities: string[];
+        lat: number;
+        lng: number;
+        arrivedOn: string | null;
+        leftOn: string | null;
+      }[];
       const sorted = stops.every((d) => d.arrivedOn)
         ? [...stops].sort((a, b) =>
             (a.arrivedOn as string).localeCompare(b.arrivedOn as string),
           )
         : stops;
-      return {
-        travelId: t.id,
-        title: t.title,
-        stops: sorted.map((d) => ({
-          id: d.id,
-          country: d.country,
-          cities: d.cities,
-          lat: d.latitude as number,
-          lng: d.longitude as number,
-          arrivedOn: d.arrivedOn,
-          leftOn: d.leftOn,
-        })),
-      };
+      return { travelId: t.id, title: t.title, stops: sorted };
     })
     .filter((r) => r.stops.length > 0);
 
@@ -95,7 +141,7 @@ export default async function TravelsPage() {
         <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
           ＋ 新しい記録を追加
         </h2>
-        <TravelForm action={addTravel} submitLabel="追加する" />
+        <TravelForm action={addTravel} masters={masters} submitLabel="追加する" />
       </section>
 
       <section className="space-y-3">
@@ -132,9 +178,9 @@ export default async function TravelsPage() {
                         className="rounded-full bg-gradient-to-r from-sky-100 to-blue-100 px-2.5 py-0.5 text-xs font-semibold text-sky-700"
                       >
                         📍 {d.country}
-                        {d.cities.length > 0 && (
+                        {d.city && (
                           <span className="font-normal text-sky-500">
-                            ({d.cities.join("、")})
+                            ・{d.city}
                           </span>
                         )}
                         {(d.arrivedOn || d.leftOn) && (

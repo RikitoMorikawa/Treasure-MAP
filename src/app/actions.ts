@@ -2,9 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { climbs, travelDestinations, travels } from "@/db/schema";
+import {
+  cities,
+  climbs,
+  countries,
+  travelDestinations,
+  travels,
+} from "@/db/schema";
 
 function travelValues(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
@@ -23,29 +29,119 @@ function travelValues(formData: FormData) {
   };
 }
 
-// hidden input "destinations" の JSON:
-// [{ country, cities: [], arrivedOn, leftOn }, ...]
+// hidden input "destinations" の JSON。1行 = 1行き先(国+都市1つ)。
+// 既存マスターは id、新規は name で指定する。lat/lng は新規都市を
+// フォーム上の地図で確認した場合のみ入る(入っていれば再ジオコーディングしない)
+// [{ countryId?, countryName?, cityId?, cityName?, lat?, lng?, arrivedOn, leftOn }]
 function parseDestinations(formData: FormData) {
   const date = (v: unknown) => {
     const s = String(v ?? "").trim();
     return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+  };
+  const num = (v: unknown) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
   };
   try {
     const raw = JSON.parse(String(formData.get("destinations") ?? "[]"));
     if (!Array.isArray(raw)) return [];
     return raw
       .map((d) => ({
-        country: String(d?.country ?? "").trim(),
-        cities: Array.isArray(d?.cities)
-          ? d.cities.map((c: unknown) => String(c).trim()).filter(Boolean)
-          : [],
+        countryId: d?.countryId != null ? num(d.countryId) : null,
+        countryName: String(d?.countryName ?? "").trim(),
+        cityId: d?.cityId != null ? num(d.cityId) : null,
+        cityName: String(d?.cityName ?? "").trim(),
+        lat: d?.lat != null ? num(d.lat) : null,
+        lng: d?.lng != null ? num(d.lng) : null,
         arrivedOn: date(d?.arrivedOn),
         leftOn: date(d?.leftOn),
       }))
-      .filter((d) => d.country);
+      .filter((d) => d.countryId != null || d.countryName);
   } catch {
     return [];
   }
+}
+
+// マスターを解決(なければ作成)して travel_destinations 用の行を返す
+async function resolveDestinations(
+  dests: ReturnType<typeof parseDestinations>,
+) {
+  const out: {
+    countryId: number;
+    cityId: number | null;
+    arrivedOn: string | null;
+    leftOn: string | null;
+  }[] = [];
+
+  for (const d of dests) {
+    // 国の解決
+    let countryId = d.countryId;
+    let countryName = d.countryName;
+    if (countryId != null) {
+      const [row] = await db
+        .select()
+        .from(countries)
+        .where(eq(countries.id, countryId));
+      if (!row) continue;
+      countryName = row.name;
+    } else {
+      const [existing] = await db
+        .select()
+        .from(countries)
+        .where(eq(countries.name, countryName));
+      if (existing) {
+        countryId = existing.id;
+      } else {
+        const coords = await geocodeDestination(countryName);
+        const [row] = await db
+          .insert(countries)
+          .values({
+            name: countryName,
+            latitude: coords?.latitude ?? null,
+            longitude: coords?.longitude ?? null,
+          })
+          .returning({ id: countries.id });
+        countryId = row.id;
+      }
+    }
+
+    // 都市の解決(未指定なら国のみの行き先)
+    let cityId = d.cityId;
+    if (cityId == null && d.cityName) {
+      const [existing] = await db
+        .select()
+        .from(cities)
+        .where(
+          and(eq(cities.countryId, countryId), eq(cities.name, d.cityName)),
+        );
+      if (existing) {
+        cityId = existing.id;
+      } else {
+        const coords =
+          d.lat != null && d.lng != null
+            ? { latitude: d.lat, longitude: d.lng }
+            : await geocodeDestination(countryName, d.cityName);
+        const [row] = await db
+          .insert(cities)
+          .values({
+            countryId,
+            name: d.cityName,
+            latitude: coords?.latitude ?? null,
+            longitude: coords?.longitude ?? null,
+          })
+          .returning({ id: cities.id });
+        cityId = row.id;
+      }
+    }
+
+    out.push({
+      countryId,
+      cityId: cityId ?? null,
+      arrivedOn: d.arrivedOn,
+      leftOn: d.leftOn,
+    });
+  }
+  return out;
 }
 
 // 国・都市名から座標を取得(世界対応のため Nominatim を使用)。
@@ -171,29 +267,19 @@ async function geocodeDestination(
   return null;
 }
 
-async function geocodeAll(dests: ReturnType<typeof parseDestinations>) {
-  const out = [];
-  for (const [i, d] of dests.entries()) {
-    if (i > 0) await sleep(1000);
-    // 都市があれば最初の都市で、なければ国名でピンを立てる
-    const coords = await geocodeDestination(d.country, d.cities[0]);
-    out.push({ ...d, ...(coords ?? { latitude: null, longitude: null }) });
-  }
-  return out;
-}
-
 export async function addTravel(formData: FormData) {
   const values = travelValues(formData);
   const dests = parseDestinations(formData);
   if (!values || dests.length === 0) return;
-  const located = await geocodeAll(dests);
+  const resolved = await resolveDestinations(dests);
+  if (resolved.length === 0) return;
   const [row] = await db
     .insert(travels)
     .values(values)
     .returning({ id: travels.id });
   await db
     .insert(travelDestinations)
-    .values(located.map((d) => ({ ...d, travelId: row.id })));
+    .values(resolved.map((d) => ({ ...d, travelId: row.id })));
   revalidatePath("/travels");
 }
 
@@ -202,14 +288,15 @@ export async function updateTravel(formData: FormData) {
   const values = travelValues(formData);
   const dests = parseDestinations(formData);
   if (!Number.isInteger(id) || !values || dests.length === 0) return;
-  const located = await geocodeAll(dests);
+  const resolved = await resolveDestinations(dests);
+  if (resolved.length === 0) return;
   await db.update(travels).set(values).where(eq(travels.id, id));
   await db
     .delete(travelDestinations)
     .where(eq(travelDestinations.travelId, id));
   await db
     .insert(travelDestinations)
-    .values(located.map((d) => ({ ...d, travelId: id })));
+    .values(resolved.map((d) => ({ ...d, travelId: id })));
   revalidatePath("/travels");
   redirect("/travels");
 }

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { travelDestinations, travels } from "@/db/schema";
+import { cities, countries, travelDestinations, travels } from "@/db/schema";
 import { updateTravel } from "@/app/actions";
 import { TravelForm } from "../../travel-form";
 
@@ -26,7 +26,21 @@ export default async function EditTravelPage({
   const dests = await db
     .select()
     .from(travelDestinations)
-    .where(eq(travelDestinations.travelId, numId));
+    .where(eq(travelDestinations.travelId, numId))
+    .orderBy(asc(travelDestinations.id));
+
+  const countryRows = await db
+    .select()
+    .from(countries)
+    .orderBy(asc(countries.name));
+  const cityRows = await db.select().from(cities).orderBy(asc(cities.name));
+  const masters = countryRows.map((co) => ({
+    id: co.id,
+    name: co.name,
+    cities: cityRows
+      .filter((ci) => ci.countryId === co.id)
+      .map((ci) => ({ id: ci.id, name: ci.name })),
+  }));
 
   return (
     <div className="space-y-6">
@@ -39,9 +53,10 @@ export default async function EditTravelPage({
       <TravelForm
         action={updateTravel}
         travel={travel}
+        masters={masters}
         destinations={dests.map((d) => ({
-          country: d.country,
-          cities: d.cities,
+          countryId: d.countryId,
+          cityId: d.cityId,
           arrivedOn: d.arrivedOn,
           leftOn: d.leftOn,
         }))}

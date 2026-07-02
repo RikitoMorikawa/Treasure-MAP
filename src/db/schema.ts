@@ -1,4 +1,10 @@
-import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  integer,
+  real,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 export const travels = sqliteTable("travels", {
@@ -12,19 +18,41 @@ export const travels = sqliteTable("travels", {
     .default(sql`(datetime('now'))`),
 });
 
-// 旅行 1件 : 国 n件。都市はさらに国ごとに n 件(JSON 配列で保持)
-// 座標は保存時に国・都市名から自動ジオコーディングして経路表示に使う
+// 国マスター。座標は国の代表点(都市未指定の行き先のピンに使う)
+export const countries = sqliteTable("countries", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull().unique(),
+  latitude: real("latitude"),
+  longitude: real("longitude"),
+});
+
+// 都市マスター。一度確定した座標を使い回すことでジオコーディングのブレを防ぐ
+export const cities = sqliteTable(
+  "cities",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    countryId: integer("country_id")
+      .notNull()
+      .references(() => countries.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    latitude: real("latitude"),
+    longitude: real("longitude"),
+  },
+  (t) => [uniqueIndex("cities_country_name").on(t.countryId, t.name)],
+);
+
+// 旅行 1件 : 行き先 n件(1行 = 1都市。都市未指定なら国のみ)
 export const travelDestinations = sqliteTable("travel_destinations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   travelId: integer("travel_id")
     .notNull()
     .references(() => travels.id, { onDelete: "cascade" }),
-  country: text("country").notNull(),
-  cities: text("cities", { mode: "json" }).$type<string[]>().notNull(),
+  countryId: integer("country_id")
+    .notNull()
+    .references(() => countries.id),
+  cityId: integer("city_id").references(() => cities.id),
   arrivedOn: text("arrived_on"),
   leftOn: text("left_on"),
-  latitude: real("latitude"),
-  longitude: real("longitude"),
 });
 
 export const climbs = sqliteTable("climbs", {
@@ -45,4 +73,6 @@ export const climbs = sqliteTable("climbs", {
 
 export type Travel = typeof travels.$inferSelect;
 export type TravelDestination = typeof travelDestinations.$inferSelect;
+export type Country = typeof countries.$inferSelect;
+export type City = typeof cities.$inferSelect;
 export type Climb = typeof climbs.$inferSelect;

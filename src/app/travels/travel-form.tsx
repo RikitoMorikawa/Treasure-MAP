@@ -1,18 +1,21 @@
 import type { Travel } from "@/db/schema";
 import {
   DestinationsEditor,
-  type DestinationInput,
+  type DestinationInitial,
+  type MasterCountry,
 } from "./destinations-editor";
 
 export function TravelForm({
   action,
   travel,
+  masters,
   destinations,
   submitLabel,
 }: {
   action: (formData: FormData) => Promise<void>;
   travel?: Travel;
-  destinations?: DestinationInput[];
+  masters: MasterCountry[];
+  destinations?: DestinationInitial[];
   submitLabel: string;
 }) {
   return (
@@ -58,7 +61,7 @@ export function TravelForm({
           />
         </label>
       </div>
-      <DestinationsEditor initial={destinations} />
+      <DestinationsEditor masters={masters} initial={destinations} />
       <label className="block text-sm">
         <span className="mb-1 block font-semibold text-slate-600">メモ</span>
         <textarea
