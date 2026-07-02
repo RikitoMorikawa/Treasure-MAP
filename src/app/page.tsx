@@ -11,33 +11,41 @@ export default async function Home() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold">これまでの記録</h1>
-        <p className="mt-1 text-sm text-stone-500">
+      <div className="text-center sm:text-left">
+        <h1 className="text-3xl font-extrabold tracking-tight">
+          これまでの<span className="bg-gradient-to-r from-sky-500 to-emerald-500 bg-clip-text text-transparent">記録</span>
+        </h1>
+        <p className="mt-2 text-sm text-slate-500">
           旅行や登山の思い出を残していきましょう。
         </p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-5 sm:grid-cols-2">
         <Link
           href="/travels"
-          className="rounded-xl border border-stone-200 bg-white p-6 transition hover:shadow-md"
+          className="group rounded-2xl bg-gradient-to-br from-sky-400 to-blue-500 p-6 text-white shadow-lg shadow-sky-200 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-sky-300"
         >
-          <div className="text-3xl">✈️</div>
-          <h2 className="mt-2 text-lg font-semibold">旅行記録</h2>
-          <p className="mt-1 text-3xl font-bold text-sky-600">
+          <div className="text-4xl transition group-hover:scale-110">✈️</div>
+          <h2 className="mt-3 text-lg font-bold">旅行記録</h2>
+          <p className="mt-1 text-4xl font-extrabold">
             {travelCount.value}
-            <span className="ml-1 text-sm font-normal text-stone-500">件</span>
+            <span className="ml-1 text-sm font-medium text-sky-100">件</span>
+          </p>
+          <p className="mt-2 text-xs text-sky-100">
+            行った場所と思い出を残す →
           </p>
         </Link>
         <Link
           href="/climbs"
-          className="rounded-xl border border-stone-200 bg-white p-6 transition hover:shadow-md"
+          className="group rounded-2xl bg-gradient-to-br from-emerald-400 to-green-500 p-6 text-white shadow-lg shadow-emerald-200 transition hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-300"
         >
-          <div className="text-3xl">⛰️</div>
-          <h2 className="mt-2 text-lg font-semibold">登山記録</h2>
-          <p className="mt-1 text-3xl font-bold text-emerald-600">
+          <div className="text-4xl transition group-hover:scale-110">⛰️</div>
+          <h2 className="mt-3 text-lg font-bold">登山記録</h2>
+          <p className="mt-1 text-4xl font-extrabold">
             {climbCount.value}
-            <span className="ml-1 text-sm font-normal text-stone-500">件</span>
+            <span className="ml-1 text-sm font-medium text-emerald-100">件</span>
+          </p>
+          <p className="mt-2 text-xs text-emerald-100">
+            登った山を記録する →
           </p>
         </Link>
       </div>
