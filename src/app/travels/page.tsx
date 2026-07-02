@@ -63,6 +63,22 @@ export default async function TravelsPage() {
     );
   };
 
+  // 国ごとの訪問回数(同じ旅行内で複数都市を回っても1回と数える)
+  const countryVisits = new Map<string, Set<number>>();
+  for (const d of destRows) {
+    const set = countryVisits.get(d.country) ?? new Set<number>();
+    set.add(d.travelId);
+    countryVisits.set(d.country, set);
+  }
+  const countryStats = [...countryVisits.entries()]
+    .map(([name, set]) => ({ name, count: set.size }))
+    .sort(
+      (a, b) => b.count - a.count || a.name.localeCompare(b.name, "ja"),
+    );
+  const cityCount = new Set(
+    destRows.filter((d) => d.city).map((d) => `${d.country}:${d.city}`),
+  ).size;
+
   // フォーム用マスター(国 → 都市)
   const countryRows = await db
     .select()
@@ -124,6 +140,63 @@ export default async function TravelsPage() {
           行った場所と思い出を記録します。
         </p>
       </div>
+
+      <section className="space-y-3">
+        <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
+          📊 旅の記録
+        </h2>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-2xl border-2 border-sky-200 bg-white p-4 text-center shadow-md">
+            <p className="text-xs font-semibold text-slate-500">✈️ 旅行回数</p>
+            <p className="mt-1 text-3xl font-extrabold text-sky-600">
+              {rows.length}
+              <span className="ml-1 text-sm font-semibold text-slate-400">
+                回
+              </span>
+            </p>
+          </div>
+          <div className="rounded-2xl border-2 border-sky-200 bg-white p-4 text-center shadow-md">
+            <p className="text-xs font-semibold text-slate-500">🌍 訪問国数</p>
+            <p className="mt-1 text-3xl font-extrabold text-sky-600">
+              {countryStats.length}
+              <span className="ml-1 text-sm font-semibold text-slate-400">
+                ヶ国
+              </span>
+            </p>
+          </div>
+          <div className="rounded-2xl border-2 border-sky-200 bg-white p-4 text-center shadow-md">
+            <p className="text-xs font-semibold text-slate-500">
+              🏙 訪問都市数
+            </p>
+            <p className="mt-1 text-3xl font-extrabold text-sky-600">
+              {cityCount}
+              <span className="ml-1 text-sm font-semibold text-slate-400">
+                都市
+              </span>
+            </p>
+          </div>
+        </div>
+        {countryStats.length > 0 && (
+          <div className="rounded-2xl border-2 border-sky-200 bg-white p-4 shadow-md">
+            <p className="mb-2 text-xs font-semibold text-slate-500">
+              国ごとの訪問回数
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {countryStats.map((c) => (
+                <span
+                  key={c.name}
+                  className="rounded-full bg-gradient-to-r from-sky-100 to-blue-100 px-3 py-1 text-sm font-semibold text-sky-700"
+                >
+                  {c.name}
+                  <span className="ml-1.5 rounded-full bg-sky-500 px-1.5 py-0.5 text-xs font-bold text-white">
+                    ×{c.count}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
 
       <section className="space-y-3">
         <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
