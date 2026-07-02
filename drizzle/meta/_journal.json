@@ -8,6 +8,13 @@
       "when": 1782975895068,
       "tag": "0000_far_calypso",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1782976950032,
+      "tag": "0001_swift_hellcat",
+      "breakpoints": true
     }
   ]
 }

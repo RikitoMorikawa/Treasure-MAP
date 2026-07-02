@@ -32,16 +32,21 @@ export async function deleteTravel(formData: FormData) {
 export async function addClimb(formData: FormData) {
   const mountainName = String(formData.get("mountainName") ?? "").trim();
   const elevationRaw = String(formData.get("elevation") ?? "").trim();
+  const courseConstantRaw = String(formData.get("courseConstant") ?? "").trim();
   const climbedOn = String(formData.get("climbedOn") ?? "").trim();
   const memo = String(formData.get("memo") ?? "").trim();
 
   if (!mountainName || !climbedOn) return;
 
   const elevation = elevationRaw ? Number(elevationRaw) : null;
+  const courseConstant = courseConstantRaw ? Number(courseConstantRaw) : null;
 
   await db.insert(climbs).values({
     mountainName,
     elevation: Number.isFinite(elevation as number) ? elevation : null,
+    courseConstant: Number.isFinite(courseConstant as number)
+      ? courseConstant
+      : null,
     climbedOn,
     memo: memo || null,
   });

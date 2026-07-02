@@ -2,14 +2,29 @@ import { desc } from "drizzle-orm";
 import { db } from "@/db";
 import { travels } from "@/db/schema";
 import { addTravel, deleteTravel } from "@/app/actions";
+import { TravelCalendar } from "./calendar";
 
 export const dynamic = "force-dynamic";
 
-export default async function TravelsPage() {
+export default async function TravelsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ month?: string }>;
+}) {
+  const { month: monthParam } = await searchParams;
+  const currentMonth = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Asia/Tokyo",
+  });
+  const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(monthParam ?? "")
+    ? (monthParam as string)
+    : currentMonth.slice(0, 7);
+
   const rows = await db
     .select()
     .from(travels)
     .orderBy(desc(travels.visitedOn), desc(travels.id));
+
+  const monthTravels = rows.filter((t) => t.visitedOn.startsWith(month));
 
   return (
     <div className="space-y-8">
@@ -78,6 +93,11 @@ export default async function TravelsPage() {
           追加する
         </button>
       </form>
+
+      <section className="space-y-3">
+        <h2 className="font-bold text-slate-600">🗓 カレンダー</h2>
+        <TravelCalendar month={month} travels={monthTravels} />
+      </section>
 
       <section className="space-y-3">
         <h2 className="font-bold text-slate-600">

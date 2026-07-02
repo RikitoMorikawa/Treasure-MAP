@@ -5,6 +5,16 @@ import { addClimb, deleteClimb } from "@/app/actions";
 
 export const dynamic = "force-dynamic";
 
+// コース定数の目安(山本正嘉「登山の運動生理学とトレーニング学」に基づく体力度のラフな区分)
+function courseLevel(cc: number): { label: string; className: string } {
+  if (cc < 15) return { label: "初級", className: "bg-lime-100 text-lime-700" };
+  if (cc < 25)
+    return { label: "中級", className: "bg-amber-100 text-amber-700" };
+  if (cc < 35)
+    return { label: "中〜上級", className: "bg-orange-100 text-orange-700" };
+  return { label: "上級", className: "bg-rose-100 text-rose-700" };
+}
+
 export default async function ClimbsPage() {
   const rows = await db
     .select()
@@ -25,7 +35,7 @@ export default async function ClimbsPage() {
         className="space-y-4 rounded-2xl border border-emerald-100 bg-white/80 p-6 shadow-lg shadow-emerald-100 backdrop-blur"
       >
         <h2 className="font-bold text-emerald-700">＋ 新しい記録を追加</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <label className="block text-sm">
             <span className="mb-1 block font-semibold text-slate-600">
               山名 <span className="text-rose-400">*</span>
@@ -46,6 +56,19 @@ export default async function ClimbsPage() {
               name="elevation"
               min="0"
               placeholder="3776"
+              className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block font-semibold text-slate-600">
+              コース定数
+            </span>
+            <input
+              type="number"
+              name="courseConstant"
+              min="0"
+              step="0.1"
+              placeholder="24.5"
               className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
             />
           </label>
@@ -102,6 +125,14 @@ export default async function ClimbsPage() {
                     {c.elevation != null && (
                       <span className="rounded-full bg-gradient-to-r from-emerald-100 to-green-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
                         ⛰ {c.elevation.toLocaleString()} m
+                      </span>
+                    )}
+                    {c.courseConstant != null && (
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${courseLevel(c.courseConstant).className}`}
+                      >
+                        💪 コース定数 {c.courseConstant}(
+                        {courseLevel(c.courseConstant).label})
                       </span>
                     )}
                   </div>

@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 
 export const travels = sqliteTable("travels", {
@@ -16,6 +16,7 @@ export const climbs = sqliteTable("climbs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   mountainName: text("mountain_name").notNull(),
   elevation: integer("elevation"),
+  courseConstant: real("course_constant"),
   climbedOn: text("climbed_on").notNull(),
   memo: text("memo"),
   createdAt: text("created_at")

@@ -1,0 +1,1 @@
+ALTER TABLE `climbs` ADD `course_constant` real;
