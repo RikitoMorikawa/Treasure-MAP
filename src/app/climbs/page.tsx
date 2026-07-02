@@ -1,8 +1,11 @@
+import Link from "next/link";
 import { desc } from "drizzle-orm";
 import { db } from "@/db";
 import { climbs } from "@/db/schema";
 import { addClimb, deleteClimb } from "@/app/actions";
-import { ClimbMap, LocationPicker } from "./client-widgets";
+import { ClimbMap } from "./client-widgets";
+import { ClimbForm } from "./climb-form";
+import { weatherEmoji } from "./constants";
 
 export const dynamic = "force-dynamic";
 
@@ -14,19 +17,6 @@ function courseLevel(cc: number): { label: string; className: string } {
   if (cc < 35)
     return { label: "中〜上級", className: "bg-orange-100 text-orange-700" };
   return { label: "上級", className: "bg-rose-100 text-rose-700" };
-}
-
-const WEATHER_OPTIONS = [
-  { value: "晴れ", emoji: "☀️" },
-  { value: "晴れ時々曇り", emoji: "🌤️" },
-  { value: "曇り", emoji: "☁️" },
-  { value: "雨", emoji: "🌧️" },
-  { value: "雪", emoji: "❄️" },
-  { value: "霧", emoji: "🌫️" },
-];
-
-function weatherEmoji(w: string) {
-  return WEATHER_OPTIONS.find((o) => o.value === w)?.emoji ?? "🌈";
 }
 
 function courseConstantText(min: number | null, max: number | null) {
@@ -71,107 +61,12 @@ export default async function ClimbsPage() {
         </div>
       </section>
 
-      <form
-        action={addClimb}
-        className="space-y-4 rounded-2xl border-2 border-emerald-200 bg-white p-6 shadow-md"
-      >
+      <section className="space-y-3">
         <h2 className="border-l-4 border-emerald-500 pl-3 font-bold text-slate-800">
           ＋ 新しい記録を追加
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="block text-sm">
-            <span className="mb-1 block font-semibold text-slate-600">
-              山名 <span className="text-rose-400">*</span>
-            </span>
-            <input
-              name="mountainName"
-              required
-              placeholder="富士山"
-              className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
-            />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-semibold text-slate-600">
-              標高(m)
-            </span>
-            <input
-              type="number"
-              name="elevation"
-              min="0"
-              placeholder="3776"
-              className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
-            />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-semibold text-slate-600">
-              登頂日 <span className="text-rose-400">*</span>
-            </span>
-            <input
-              type="date"
-              name="climbedOn"
-              required
-              className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
-            />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-semibold text-slate-600">
-              天気
-            </span>
-            <select
-              name="weather"
-              defaultValue=""
-              className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
-            >
-              <option value="">未設定</option>
-              {WEATHER_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.emoji} {o.value}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-        <div className="block text-sm">
-          <span className="mb-1 block font-semibold text-slate-600">
-            コース定数(単一なら左だけ、範囲なら両方)
-          </span>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              name="courseConstantMin"
-              min="0"
-              step="0.1"
-              placeholder="20"
-              className="w-28 rounded-xl border border-emerald-200 bg-white px-3 py-2 transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
-            />
-            <span className="font-bold text-slate-400">〜</span>
-            <input
-              type="number"
-              name="courseConstantMax"
-              min="0"
-              step="0.1"
-              placeholder="25"
-              className="w-28 rounded-xl border border-emerald-200 bg-white px-3 py-2 transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
-            />
-          </div>
-        </div>
-        <LocationPicker />
-        <label className="block text-sm">
-          <span className="mb-1 block font-semibold text-slate-600">メモ</span>
-          <textarea
-            name="memo"
-            rows={3}
-            placeholder="ルート、感想など"
-            className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
-          />
-        </label>
-        <button
-          type="submit"
-          className="rounded-full bg-gradient-to-r from-emerald-500 to-green-500 px-6 py-2 text-sm font-bold text-white shadow-md shadow-emerald-200 transition hover:-translate-y-0.5 hover:shadow-lg"
-        >
-          追加する
-        </button>
-      </form>
+        <ClimbForm action={addClimb} submitLabel="追加する" />
+      </section>
 
       <section className="space-y-3">
         <h2 className="border-l-4 border-emerald-500 pl-3 font-bold text-slate-800">
@@ -235,15 +130,23 @@ export default async function ClimbsPage() {
                       </p>
                     )}
                   </div>
-                  <form action={deleteClimb}>
-                    <input type="hidden" name="id" value={c.id} />
-                    <button
-                      type="submit"
-                      className="rounded-full px-2 py-1 text-xs text-slate-500 transition hover:bg-rose-50 hover:text-rose-500"
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Link
+                      href={`/climbs/${c.id}/edit`}
+                      className="rounded-full px-2 py-1 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-50"
                     >
-                      削除
-                    </button>
-                  </form>
+                      編集
+                    </Link>
+                    <form action={deleteClimb}>
+                      <input type="hidden" name="id" value={c.id} />
+                      <button
+                        type="submit"
+                        className="rounded-full px-2 py-1 text-xs text-slate-500 transition hover:bg-rose-50 hover:text-rose-500"
+                      >
+                        削除
+                      </button>
+                    </form>
+                  </div>
                 </li>
               );
             })}

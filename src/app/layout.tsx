@@ -14,7 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className="min-h-screen bg-gradient-to-br from-sky-100 via-white to-amber-100 text-slate-800 antialiased">
+      <body className="min-h-screen bg-gradient-to-br from-sky-200 via-cyan-100 to-amber-200 text-slate-800 antialiased">
         <header className="border-b border-white/60 bg-white/70 shadow-sm backdrop-blur">
           <nav className="mx-auto flex max-w-4xl items-center gap-6 px-4 py-3">
             <Link

@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { desc } from "drizzle-orm";
 import { db } from "@/db";
 import { travels } from "@/db/schema";
 import { addTravel, deleteTravel } from "@/app/actions";
 import { TravelCalendar } from "./calendar";
+import { TravelForm } from "./travel-form";
 
 export const dynamic = "force-dynamic";
 
@@ -35,64 +37,12 @@ export default async function TravelsPage({
         </p>
       </div>
 
-      <form
-        action={addTravel}
-        className="space-y-4 rounded-2xl border-2 border-sky-200 bg-white p-6 shadow-md"
-      >
+      <section className="space-y-3">
         <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
           ＋ 新しい記録を追加
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm">
-            <span className="mb-1 block font-semibold text-slate-600">
-              タイトル <span className="text-rose-400">*</span>
-            </span>
-            <input
-              name="title"
-              required
-              placeholder="夏の北海道旅行"
-              className="w-full rounded-xl border border-sky-200 bg-white px-3 py-2 transition focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:outline-none"
-            />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-semibold text-slate-600">
-              行き先 <span className="text-rose-400">*</span>
-            </span>
-            <input
-              name="destination"
-              required
-              placeholder="北海道・札幌"
-              className="w-full rounded-xl border border-sky-200 bg-white px-3 py-2 transition focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:outline-none"
-            />
-          </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-semibold text-slate-600">
-              訪問日 <span className="text-rose-400">*</span>
-            </span>
-            <input
-              type="date"
-              name="visitedOn"
-              required
-              className="w-full rounded-xl border border-sky-200 bg-white px-3 py-2 transition focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:outline-none"
-            />
-          </label>
-        </div>
-        <label className="block text-sm">
-          <span className="mb-1 block font-semibold text-slate-600">メモ</span>
-          <textarea
-            name="memo"
-            rows={3}
-            placeholder="印象に残ったことなど"
-            className="w-full rounded-xl border border-sky-200 bg-white px-3 py-2 transition focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:outline-none"
-          />
-        </label>
-        <button
-          type="submit"
-          className="rounded-full bg-gradient-to-r from-sky-500 to-blue-500 px-6 py-2 text-sm font-bold text-white shadow-md shadow-sky-200 transition hover:-translate-y-0.5 hover:shadow-lg"
-        >
-          追加する
-        </button>
-      </form>
+        <TravelForm action={addTravel} submitLabel="追加する" />
+      </section>
 
       <section className="space-y-3">
         <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
@@ -135,15 +85,23 @@ export default async function TravelsPage({
                     </p>
                   )}
                 </div>
-                <form action={deleteTravel}>
-                  <input type="hidden" name="id" value={t.id} />
-                  <button
-                    type="submit"
-                    className="rounded-full px-2 py-1 text-xs text-slate-500 transition hover:bg-rose-50 hover:text-rose-500"
+                <div className="flex shrink-0 items-center gap-1">
+                  <Link
+                    href={`/travels/${t.id}/edit`}
+                    className="rounded-full px-2 py-1 text-xs font-semibold text-sky-500 transition hover:bg-sky-50"
                   >
-                    削除
-                  </button>
-                </form>
+                    編集
+                  </Link>
+                  <form action={deleteTravel}>
+                    <input type="hidden" name="id" value={t.id} />
+                    <button
+                      type="submit"
+                      className="rounded-full px-2 py-1 text-xs text-slate-500 transition hover:bg-rose-50 hover:text-rose-500"
+                    >
+                      削除
+                    </button>
+                  </form>
+                </div>
               </li>
             ))}
           </ul>

@@ -1,25 +1,34 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { climbs, travels } from "@/db/schema";
 
-export async function addTravel(formData: FormData) {
+function travelValues(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const destination = String(formData.get("destination") ?? "").trim();
   const visitedOn = String(formData.get("visitedOn") ?? "").trim();
   const memo = String(formData.get("memo") ?? "").trim();
+  if (!title || !destination || !visitedOn) return null;
+  return { title, destination, visitedOn, memo: memo || null };
+}
 
-  if (!title || !destination || !visitedOn) return;
-
-  await db.insert(travels).values({
-    title,
-    destination,
-    visitedOn,
-    memo: memo || null,
-  });
+export async function addTravel(formData: FormData) {
+  const values = travelValues(formData);
+  if (!values) return;
+  await db.insert(travels).values(values);
   revalidatePath("/travels");
+}
+
+export async function updateTravel(formData: FormData) {
+  const id = Number(formData.get("id"));
+  const values = travelValues(formData);
+  if (!Number.isInteger(id) || !values) return;
+  await db.update(travels).set(values).where(eq(travels.id, id));
+  revalidatePath("/travels");
+  redirect("/travels");
 }
 
 export async function deleteTravel(formData: FormData) {
@@ -29,7 +38,7 @@ export async function deleteTravel(formData: FormData) {
   revalidatePath("/travels");
 }
 
-export async function addClimb(formData: FormData) {
+function climbValues(formData: FormData) {
   const num = (name: string) => {
     const raw = String(formData.get(name) ?? "").trim();
     if (!raw) return null;
@@ -42,7 +51,7 @@ export async function addClimb(formData: FormData) {
   const weather = String(formData.get("weather") ?? "").trim();
   const memo = String(formData.get("memo") ?? "").trim();
 
-  if (!mountainName || !climbedOn) return;
+  if (!mountainName || !climbedOn) return null;
 
   let ccMin = num("courseConstantMin");
   let ccMax = num("courseConstantMax");
@@ -50,7 +59,7 @@ export async function addClimb(formData: FormData) {
     [ccMin, ccMax] = [ccMax, ccMin];
   }
 
-  await db.insert(climbs).values({
+  return {
     mountainName,
     elevation: num("elevation"),
     courseConstantMin: ccMin,
@@ -60,8 +69,23 @@ export async function addClimb(formData: FormData) {
     longitude: num("longitude"),
     climbedOn,
     memo: memo || null,
-  });
+  };
+}
+
+export async function addClimb(formData: FormData) {
+  const values = climbValues(formData);
+  if (!values) return;
+  await db.insert(climbs).values(values);
   revalidatePath("/climbs");
+}
+
+export async function updateClimb(formData: FormData) {
+  const id = Number(formData.get("id"));
+  const values = climbValues(formData);
+  if (!Number.isInteger(id) || !values) return;
+  await db.update(climbs).set(values).where(eq(climbs.id, id));
+  revalidatePath("/climbs");
+  redirect("/climbs");
 }
 
 export async function deleteClimb(formData: FormData) {

@@ -14,6 +14,61 @@ const pinIcon = L.divIcon({
 
 const JAPAN_CENTER: [number, number] = [37.5, 137.5];
 
+type GeocodeResult = { lat: number; lng: number; label: string };
+
+// 郵便番号 → 住所 (zipcloud)
+async function zipToAddress(zip: string): Promise<string | null> {
+  const res = await fetch(
+    `https://zipcloud.ibsnet.co.jp/api/search?zipcode=${zip}`,
+  );
+  const data = await res.json();
+  const r = data?.results?.[0];
+  if (!r) return null;
+  return `${r.address1}${r.address2}${r.address3}`;
+}
+
+// 国土地理院の住所検索(日本の住所・山名に強い)
+async function gsiSearch(q: string): Promise<GeocodeResult | null> {
+  const res = await fetch(
+    `https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(q)}`,
+  );
+  const data: {
+    geometry: { coordinates: [number, number] };
+    properties: { title: string };
+  }[] = await res.json();
+  if (!Array.isArray(data) || data.length === 0) return null;
+  const [lng, lat] = data[0].geometry.coordinates;
+  return { lat, lng, label: data[0].properties.title };
+}
+
+// フォールバック: Nominatim(日本国内に限定)
+async function nominatimSearch(q: string): Promise<GeocodeResult | null> {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=jp&accept-language=ja&q=${encodeURIComponent(q)}`,
+  );
+  const results: { lat: string; lon: string; display_name: string }[] =
+    await res.json();
+  if (results.length === 0) return null;
+  return {
+    lat: Number(results[0].lat),
+    lng: Number(results[0].lon),
+    label: results[0].display_name,
+  };
+}
+
+async function geocode(rawQuery: string): Promise<GeocodeResult | null> {
+  let query = rawQuery.trim();
+
+  // 郵便番号(123-4567 / 1234567)は先に住所へ変換
+  const zipMatch = query.replace(/[^0-9]/g, "");
+  if (/^\d{3}-?\d{4}$/.test(query) && zipMatch.length === 7) {
+    const addr = await zipToAddress(zipMatch);
+    if (addr) query = addr;
+  }
+
+  return (await gsiSearch(query)) ?? (await nominatimSearch(query));
+}
+
 function ClickHandler({
   onPick,
 }: {
@@ -33,9 +88,18 @@ function FlyTo({ pos }: { pos: [number, number] | null }) {
   return null;
 }
 
-export default function LocationPicker() {
+export default function LocationPicker({
+  initialLat,
+  initialLng,
+}: {
+  initialLat?: number | null;
+  initialLng?: number | null;
+}) {
+  const hasInitial = initialLat != null && initialLng != null;
   const [query, setQuery] = useState("");
-  const [pos, setPos] = useState<[number, number] | null>(null);
+  const [pos, setPos] = useState<[number, number] | null>(
+    hasInitial ? [initialLat, initialLng] : null,
+  );
   const [flyTarget, setFlyTarget] = useState<[number, number] | null>(null);
   const [status, setStatus] = useState<string>("");
 
@@ -43,20 +107,16 @@ export default function LocationPicker() {
     if (!query.trim()) return;
     setStatus("検索中…");
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=ja&q=${encodeURIComponent(query)}`,
-      );
-      const results: { lat: string; lon: string; display_name: string }[] =
-        await res.json();
-      if (results.length === 0) {
-        setStatus("見つかりませんでした。地図をクリックして指定もできます。");
+      const result = await geocode(query);
+      if (!result) {
+        setStatus(
+          "見つかりませんでした。表記を変えるか、地図をクリックして指定してください。",
+        );
         return;
       }
-      const lat = Number(results[0].lat);
-      const lng = Number(results[0].lon);
-      setPos([lat, lng]);
-      setFlyTarget([lat, lng]);
-      setStatus(`📍 ${results[0].display_name}`);
+      setPos([result.lat, result.lng]);
+      setFlyTarget([result.lat, result.lng]);
+      setStatus(`📍 ${result.label}`);
     } catch {
       setStatus("検索に失敗しました。地図をクリックして指定してください。");
     }
@@ -65,7 +125,7 @@ export default function LocationPicker() {
   return (
     <div className="space-y-2">
       <span className="block text-sm font-semibold text-slate-600">
-        場所(山名・住所で検索、または地図をクリック)
+        場所(山名・住所・郵便番号で検索、または地図をクリック)
       </span>
       <div className="flex gap-2">
         <input
@@ -77,7 +137,7 @@ export default function LocationPicker() {
               search();
             }
           }}
-          placeholder="例: 高尾山 / 富士山 / 長野県松本市"
+          placeholder="例: 高尾山 / 長野県松本市 / 100-0001"
           className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2 text-sm transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-200 focus:outline-none"
         />
         <button
@@ -91,8 +151,8 @@ export default function LocationPicker() {
       {status && <p className="text-xs text-slate-500">{status}</p>}
       <div className="overflow-hidden rounded-xl border-2 border-emerald-200">
         <MapContainer
-          center={JAPAN_CENTER}
-          zoom={5}
+          center={hasInitial ? [initialLat, initialLng] : JAPAN_CENTER}
+          zoom={hasInitial ? 11 : 5}
           scrollWheelZoom
           className="z-0 h-56 w-full"
         >
