@@ -13,163 +13,163 @@ function travelEnd(t: Travel) {
   return t.returnedOn ?? t.departedOn;
 }
 
-export function TravelCalendar({
+function MiniMonth({
+  year,
+  mon,
   travels,
-  initialMonth,
+  today,
 }: {
+  year: number;
+  mon: number;
   travels: Travel[];
-  initialMonth: string; // "YYYY-MM"
+  today: string;
 }) {
-  const [ym, setYm] = useState(() => {
-    const [y, m] = initialMonth.split("-").map(Number);
-    return { y, m };
-  });
-
-  const shift = (months: number) =>
-    setYm(({ y, m }) => {
-      const total = y * 12 + (m - 1) + months;
-      return { y: Math.floor(total / 12), m: (total % 12) + 1 };
-    });
-
-  const goToday = () => {
-    const [y, m] = new Date()
-      .toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" })
-      .slice(0, 7)
-      .split("-")
-      .map(Number);
-    setYm({ y, m });
-  };
-
-  const { y: year, m: mon } = ym;
   const month = `${year}-${pad(mon)}`;
   const firstWeekday = new Date(Date.UTC(year, mon - 1, 1)).getUTCDay();
   const daysInMonth = new Date(Date.UTC(year, mon, 0)).getUTCDate();
-
-  const today = new Date().toLocaleDateString("en-CA", {
-    timeZone: "Asia/Tokyo",
-  });
-
-  // 表示月と期間が重なる旅行だけに絞る
-  const monthStart = `${month}-01`;
-  const monthEnd = `${month}-31`;
-  const monthTravels = travels.filter(
-    (t) => t.departedOn <= monthEnd && travelEnd(t) >= monthStart,
-  );
 
   const cells: (number | null)[] = [
     ...Array.from({ length: firstWeekday }, () => null),
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
-  while (cells.length % 7 !== 0) cells.push(null);
-
-  const navBtn =
-    "rounded-full px-2.5 py-1 text-sm font-bold text-sky-500 transition hover:bg-sky-100";
 
   return (
-    <div className="rounded-2xl border-2 border-sky-200 bg-white p-5 shadow-md">
-      <div className="mb-4 flex items-center justify-between gap-1">
-        <div className="flex items-center">
-          <button type="button" onClick={() => shift(-12)} className={navBtn} title="前年">
-            «
-          </button>
-          <button type="button" onClick={() => shift(-1)} className={navBtn} title="前月">
-            ‹
-          </button>
-        </div>
-        <div className="flex items-center gap-2">
-          <h3 className="text-lg font-extrabold text-slate-700">
-            {year}年 {mon}月
-          </h3>
-          <button
-            type="button"
-            onClick={goToday}
-            className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-600 transition hover:bg-sky-200"
-          >
-            今月
-          </button>
-        </div>
-        <div className="flex items-center">
-          <button type="button" onClick={() => shift(1)} className={navBtn} title="翌月">
-            ›
-          </button>
-          <button type="button" onClick={() => shift(12)} className={navBtn} title="翌年">
-            »
-          </button>
-        </div>
-      </div>
-      <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold">
+    <div className="rounded-xl border border-sky-100 bg-white p-2.5 shadow-sm">
+      <p className="mb-1 text-center text-xs font-extrabold text-slate-600">
+        {mon}月
+      </p>
+      <div className="grid grid-cols-7 gap-px text-center">
         {WEEKDAYS.map((w, i) => (
-          <div
+          <span
             key={w}
-            className={
+            className={`text-[9px] font-bold ${
               i === 0
-                ? "py-1 text-rose-400"
+                ? "text-rose-300"
                 : i === 6
-                  ? "py-1 text-sky-400"
-                  : "py-1 text-slate-400"
-            }
+                  ? "text-sky-300"
+                  : "text-slate-300"
+            }`}
           >
             {w}
-          </div>
+          </span>
         ))}
         {cells.map((day, i) => {
-          if (day === null) return <div key={i} />;
+          if (day === null) return <span key={i} />;
           const dateStr = `${month}-${pad(day)}`;
-          const dayTravels = monthTravels.filter(
+          const dayTravels = travels.filter(
             (t) => t.departedOn <= dateStr && dateStr <= travelEnd(t),
           );
           const isToday = dateStr === today;
+          const covered = dayTravels.length > 0;
           return (
-            <div
+            <span
               key={i}
-              className={`min-h-14 rounded-lg border p-1 text-left align-top ${
-                isToday
-                  ? "border-amber-400 bg-amber-50"
-                  : dayTravels.length > 0
-                    ? "border-sky-400 bg-sky-100"
-                    : "border-slate-200 bg-slate-50"
-              }`}
+              title={
+                covered
+                  ? dayTravels
+                      .map(
+                        (t) =>
+                          `✈️ ${t.title}(${t.destination})${t.departedOn}〜${travelEnd(t)}`,
+                      )
+                      .join("\n")
+                  : undefined
+              }
+              className={`mx-auto flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
+                covered
+                  ? "bg-gradient-to-br from-sky-400 to-blue-500 font-bold text-white"
+                  : "text-slate-500"
+              } ${isToday ? "ring-2 ring-amber-400" : ""}`}
             >
-              <span
-                className={`text-[11px] font-semibold ${
-                  isToday ? "text-amber-600" : "text-slate-400"
-                }`}
-              >
-                {day}
-              </span>
-              {dayTravels.map((t) => {
-                // タイトルは期間の初日(または月初)に表示、続く日は帯だけ
-                const showLabel = dateStr === t.departedOn || day === 1;
-                const isStart = dateStr === t.departedOn;
-                const isEnd = dateStr === travelEnd(t);
-                const rounding =
-                  isStart && isEnd
-                    ? "rounded"
-                    : isStart
-                      ? "-mr-1 rounded-l"
-                      : isEnd
-                        ? "-ml-1 rounded-r"
-                        : "-mx-1";
-                return showLabel ? (
-                  <p
-                    key={t.id}
-                    title={`${t.title}(${t.destination})${t.departedOn}〜${travelEnd(t)}`}
-                    className={`mt-0.5 truncate bg-gradient-to-r from-sky-400 to-blue-400 px-1 py-0.5 text-[10px] font-semibold text-white ${rounding}`}
-                  >
-                    ✈️ {t.title}
-                  </p>
-                ) : (
-                  <div
-                    key={t.id}
-                    title={`${t.title}(${t.destination})${t.departedOn}〜${travelEnd(t)}`}
-                    className={`mt-0.5 h-[19px] bg-gradient-to-r from-sky-300 to-blue-300 ${rounding}`}
-                  />
-                );
-              })}
-            </div>
+              {day}
+            </span>
           );
         })}
       </div>
+    </div>
+  );
+}
+
+export function TravelCalendar({
+  travels,
+  initialYear,
+}: {
+  travels: Travel[];
+  initialYear: number;
+}) {
+  const [year, setYear] = useState(initialYear);
+
+  const today = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Asia/Tokyo",
+  });
+
+  const goThisYear = () => setYear(Number(today.slice(0, 4)));
+
+  // 表示年と期間が重なる旅行だけに絞る
+  const yearStart = `${year}-01-01`;
+  const yearEnd = `${year}-12-31`;
+  const yearTravels = travels.filter(
+    (t) => t.departedOn <= yearEnd && travelEnd(t) >= yearStart,
+  );
+
+  const navBtn =
+    "rounded-full px-3 py-1 text-sm font-bold text-sky-500 transition hover:bg-sky-100";
+
+  return (
+    <div className="rounded-2xl border-2 border-sky-200 bg-white p-5 shadow-md">
+      <div className="mb-4 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setYear((y) => y - 1)}
+          className={navBtn}
+        >
+          ← 前年
+        </button>
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg font-extrabold text-slate-700">{year}年</h3>
+          <button
+            type="button"
+            onClick={goThisYear}
+            className="rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-600 transition hover:bg-sky-200"
+          >
+            今年
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={() => setYear((y) => y + 1)}
+          className={navBtn}
+        >
+          翌年 →
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {Array.from({ length: 12 }, (_, i) => (
+          <MiniMonth
+            key={i}
+            year={year}
+            mon={i + 1}
+            travels={yearTravels}
+            today={today}
+          />
+        ))}
+      </div>
+
+      {yearTravels.length > 0 && (
+        <ul className="mt-4 space-y-1 border-t border-sky-100 pt-3">
+          {yearTravels.map((t) => (
+            <li key={t.id} className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-gradient-to-br from-sky-400 to-blue-500" />
+              <span className="font-bold text-slate-700">✈️ {t.title}</span>
+              <span className="text-slate-500">({t.destination})</span>
+              <span className="font-semibold text-sky-600">
+                {t.departedOn}
+                {travelEnd(t) !== t.departedOn ? ` 〜 ${travelEnd(t)}` : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

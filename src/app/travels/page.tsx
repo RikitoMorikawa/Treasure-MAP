@@ -9,9 +9,11 @@ import { TravelForm } from "./travel-form";
 export const dynamic = "force-dynamic";
 
 export default async function TravelsPage() {
-  const currentMonth = new Date()
-    .toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" })
-    .slice(0, 7);
+  const currentYear = Number(
+    new Date()
+      .toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" })
+      .slice(0, 4),
+  );
 
   const rows = await db
     .select()
@@ -38,7 +40,7 @@ export default async function TravelsPage() {
         <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
           🗓 カレンダー
         </h2>
-        <TravelCalendar initialMonth={currentMonth} travels={rows} />
+        <TravelCalendar initialYear={currentYear} travels={rows} />
       </section>
 
       <section className="space-y-3">
