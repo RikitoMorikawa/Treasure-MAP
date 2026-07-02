@@ -8,31 +8,15 @@ import { TravelForm } from "./travel-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function TravelsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ month?: string }>;
-}) {
-  const { month: monthParam } = await searchParams;
-  const currentMonth = new Date().toLocaleDateString("en-CA", {
-    timeZone: "Asia/Tokyo",
-  });
-  const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(monthParam ?? "")
-    ? (monthParam as string)
-    : currentMonth.slice(0, 7);
+export default async function TravelsPage() {
+  const currentMonth = new Date()
+    .toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" })
+    .slice(0, 7);
 
   const rows = await db
     .select()
     .from(travels)
     .orderBy(desc(travels.departedOn), desc(travels.id));
-
-  // その月と期間が少しでも重なる旅行を対象にする
-  const monthStart = `${month}-01`;
-  const monthEnd = `${month}-31`;
-  const monthTravels = rows.filter(
-    (t) =>
-      t.departedOn <= monthEnd && (t.returnedOn ?? t.departedOn) >= monthStart,
-  );
 
   return (
     <div className="space-y-8">
@@ -54,7 +38,7 @@ export default async function TravelsPage({
         <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
           🗓 カレンダー
         </h2>
-        <TravelCalendar month={month} travels={monthTravels} />
+        <TravelCalendar initialMonth={currentMonth} travels={rows} />
       </section>
 
       <section className="space-y-3">
