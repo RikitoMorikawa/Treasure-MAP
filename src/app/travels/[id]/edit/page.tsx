@@ -59,6 +59,7 @@ export default async function EditTravelPage({
           cityId: d.cityId,
           arrivedOn: d.arrivedOn,
           leftOn: d.leftOn,
+          urls: d.urls,
         }))}
         submitLabel="更新する"
       />

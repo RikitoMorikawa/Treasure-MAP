@@ -55,6 +55,11 @@ function parseDestinations(formData: FormData) {
         lng: d?.lng != null ? num(d.lng) : null,
         arrivedOn: date(d?.arrivedOn),
         leftOn: date(d?.leftOn),
+        urls: Array.isArray(d?.urls)
+          ? d.urls
+              .map((u: unknown) => String(u).trim())
+              .filter((u: string) => /^https?:\/\/.+/.test(u))
+          : [],
       }))
       .filter((d) => d.countryId != null || d.countryName);
   } catch {
@@ -72,6 +77,7 @@ async function resolveDestinations(
     sortOrder: number;
     arrivedOn: string | null;
     leftOn: string | null;
+    urls: string[];
   }[] = [];
 
   for (const d of dests) {
@@ -141,6 +147,7 @@ async function resolveDestinations(
       sortOrder: out.length, // フォームの表示順をそのまま保存
       arrivedOn: d.arrivedOn,
       leftOn: d.leftOn,
+      urls: d.urls,
     });
   }
   return out;

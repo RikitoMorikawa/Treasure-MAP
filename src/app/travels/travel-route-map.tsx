@@ -12,7 +12,16 @@ export type RouteStop = {
   lng: number;
   arrivedOn: string | null;
   leftOn: string | null;
+  urls: string[];
 };
+
+function urlHost(u: string) {
+  try {
+    return new URL(u).hostname.replace(/^www\./, "");
+  } catch {
+    return u;
+  }
+}
 
 export type TravelRoute = {
   travelId: number;
@@ -81,6 +90,15 @@ export default function TravelRouteMap({ routes }: { routes: TravelRoute[] }) {
                       🛬 {s.arrivedOn ?? "?"} → 🛫 {s.leftOn ?? "?"}
                     </>
                   )}
+                  {s.urls.map((u, ui) => (
+                    <span key={ui}>
+                      <br />
+                      🏨{" "}
+                      <a href={u} target="_blank" rel="noopener noreferrer">
+                        {urlHost(u)}
+                      </a>
+                    </span>
+                  ))}
                 </Popup>
               </Marker>
             ))}

@@ -9,6 +9,14 @@ import { TravelRouteMap } from "./client-widgets";
 
 export const dynamic = "force-dynamic";
 
+function urlHost(u: string) {
+  try {
+    return new URL(u).hostname.replace(/^www\./, "");
+  } catch {
+    return u;
+  }
+}
+
 export default async function TravelsPage() {
   const currentYear = Number(
     new Date()
@@ -28,6 +36,7 @@ export default async function TravelsPage() {
       travelId: travelDestinations.travelId,
       arrivedOn: travelDestinations.arrivedOn,
       leftOn: travelDestinations.leftOn,
+      urls: travelDestinations.urls,
       country: countries.name,
       city: cities.name,
       cityLat: cities.latitude,
@@ -113,6 +122,7 @@ export default async function TravelsPage() {
           lng: d.cityLng ?? d.countryLng,
           arrivedOn: d.arrivedOn,
           leftOn: d.leftOn,
+          urls: d.urls,
         }))
         .filter((d) => d.lat != null && d.lng != null) as {
         id: number;
@@ -122,6 +132,7 @@ export default async function TravelsPage() {
         lng: number;
         arrivedOn: string | null;
         leftOn: string | null;
+        urls: string[];
       }[];
       return { travelId: t.id, title: t.title, stops };
     })
@@ -266,6 +277,25 @@ export default async function TravelsPage() {
                       ? ` 〜 ${t.returnedOn}`
                       : ""}
                   </p>
+                  {(destsByTravel.get(t.id) ?? []).some(
+                    (d) => d.urls.length > 0,
+                  ) && (
+                    <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
+                      {(destsByTravel.get(t.id) ?? []).flatMap((d) =>
+                        d.urls.map((u, ui) => (
+                          <a
+                            key={`${d.id}-${ui}`}
+                            href={u}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-semibold text-sky-600 underline decoration-sky-300 hover:text-sky-800"
+                          >
+                            🏨 {d.city ?? d.country}:{urlHost(u)}
+                          </a>
+                        )),
+                      )}
+                    </div>
+                  )}
                   {t.memo && (
                     <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
                       {t.memo}

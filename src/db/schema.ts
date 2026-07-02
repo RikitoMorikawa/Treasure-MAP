@@ -54,6 +54,11 @@ export const travelDestinations = sqliteTable("travel_destinations", {
   sortOrder: integer("sort_order").notNull().default(0),
   arrivedOn: text("arrived_on"),
   leftOn: text("left_on"),
+  // 宿泊ホテルなどの参考リンク(複数可)
+  urls: text("urls", { mode: "json" })
+    .$type<string[]>()
+    .notNull()
+    .default(sql`'[]'`),
 });
 
 export const climbs = sqliteTable("climbs", {

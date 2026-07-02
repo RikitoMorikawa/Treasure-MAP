@@ -16,6 +16,7 @@ export type DestinationInitial = {
   cityId: number | null;
   arrivedOn: string | null;
   leftOn: string | null;
+  urls: string[];
 };
 
 type Row = {
@@ -26,6 +27,7 @@ type Row = {
   showMap: boolean;
   arrivedOn: string;
   leftOn: string;
+  urls: string[];
 };
 
 const EMPTY_ROW: Row = {
@@ -36,6 +38,7 @@ const EMPTY_ROW: Row = {
   showMap: false,
   arrivedOn: "",
   leftOn: "",
+  urls: [],
 };
 
 function Badge({ isNew, filled }: { isNew: boolean; filled: boolean }) {
@@ -70,6 +73,7 @@ export function DestinationsEditor({
             city: ci?.name ?? "",
             arrivedOn: d.arrivedOn ?? "",
             leftOn: d.leftOn ?? "",
+            urls: d.urls,
           };
         })
       : [{ ...EMPTY_ROW }],
@@ -109,6 +113,7 @@ export function DestinationsEditor({
           lng: isNewCity ? r.lng : null,
           arrivedOn: r.arrivedOn || null,
           leftOn: r.leftOn || null,
+          urls: r.urls.map((u) => u.trim()).filter(Boolean),
         };
       })
       .filter((d) => d.countryId != null || d.countryName),
@@ -266,7 +271,48 @@ export function DestinationsEditor({
                   {r.showMap ? "地図を閉じる" : "🗺 位置を確認・調整"}
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => update(i, { urls: [...r.urls, ""] })}
+                className="rounded-full border border-sky-300 px-2.5 py-1 text-xs font-bold text-sky-600 transition hover:bg-sky-50"
+              >
+                🔗 URL を追加
+              </button>
             </div>
+            {r.urls.length > 0 && (
+              <div className="space-y-1 pl-8">
+                {r.urls.map((u, ui) => (
+                  <div key={ui} className="flex items-center gap-1">
+                    <span className="text-xs">🏨</span>
+                    <input
+                      type="url"
+                      value={u}
+                      onChange={(e) =>
+                        update(i, {
+                          urls: r.urls.map((x, xi) =>
+                            xi === ui ? e.target.value : x,
+                          ),
+                        })
+                      }
+                      placeholder="https://(宿泊ホテルのリンクなど)"
+                      className={`flex-1 ${inputCls}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        update(i, {
+                          urls: r.urls.filter((_, xi) => xi !== ui),
+                        })
+                      }
+                      className="rounded-full px-2 py-1 text-xs font-bold text-slate-400 transition hover:bg-rose-50 hover:text-rose-500"
+                      title="この URL を削除"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             {r.showMap && isNewCity && (
               <div className="pl-8">
                 <PinConfirm
