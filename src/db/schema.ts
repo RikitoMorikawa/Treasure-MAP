@@ -5,7 +5,8 @@ export const travels = sqliteTable("travels", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),
   destination: text("destination").notNull(),
-  visitedOn: text("visited_on").notNull(),
+  departedOn: text("departed_on").notNull(),
+  returnedOn: text("returned_on"),
   memo: text("memo"),
   createdAt: text("created_at")
     .notNull()

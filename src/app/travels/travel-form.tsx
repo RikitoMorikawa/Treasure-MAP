@@ -42,13 +42,24 @@ export function TravelForm({
         </label>
         <label className="block text-sm">
           <span className="mb-1 block font-semibold text-slate-600">
-            訪問日 <span className="text-rose-400">*</span>
+            出国日 <span className="text-rose-400">*</span>
           </span>
           <input
             type="date"
-            name="visitedOn"
+            name="departedOn"
             required
-            defaultValue={travel?.visitedOn}
+            defaultValue={travel?.departedOn}
+            className="w-full rounded-xl border border-sky-200 bg-white px-3 py-2 transition focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+          />
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block font-semibold text-slate-600">
+            帰国日(日帰りなら空欄)
+          </span>
+          <input
+            type="date"
+            name="returnedOn"
+            defaultValue={travel?.returnedOn ?? ""}
             className="w-full rounded-xl border border-sky-200 bg-white px-3 py-2 transition focus:border-sky-400 focus:ring-2 focus:ring-sky-200 focus:outline-none"
           />
         </label>

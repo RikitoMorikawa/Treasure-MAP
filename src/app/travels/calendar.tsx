@@ -7,6 +7,10 @@ function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
+function travelEnd(t: Travel) {
+  return t.returnedOn ?? t.departedOn;
+}
+
 export function TravelCalendar({
   month,
   travels,
@@ -24,13 +28,6 @@ export function TravelCalendar({
   const today = new Date().toLocaleDateString("en-CA", {
     timeZone: "Asia/Tokyo",
   });
-
-  const byDate = new Map<string, Travel[]>();
-  for (const t of travels) {
-    const list = byDate.get(t.visitedOn) ?? [];
-    list.push(t);
-    byDate.set(t.visitedOn, list);
-  }
 
   const cells: (number | null)[] = [
     ...Array.from({ length: firstWeekday }, () => null),
@@ -75,7 +72,9 @@ export function TravelCalendar({
         {cells.map((day, i) => {
           if (day === null) return <div key={i} />;
           const dateStr = `${month}-${pad(day)}`;
-          const dayTravels = byDate.get(dateStr) ?? [];
+          const dayTravels = travels.filter(
+            (t) => t.departedOn <= dateStr && dateStr <= travelEnd(t),
+          );
           const isToday = dateStr === today;
           return (
             <div
@@ -95,15 +94,36 @@ export function TravelCalendar({
               >
                 {day}
               </span>
-              {dayTravels.map((t) => (
-                <p
-                  key={t.id}
-                  title={`${t.title}(${t.destination})`}
-                  className="mt-0.5 truncate rounded bg-gradient-to-r from-sky-400 to-blue-400 px-1 py-0.5 text-[10px] font-semibold text-white"
-                >
-                  ✈️ {t.title}
-                </p>
-              ))}
+              {dayTravels.map((t) => {
+                // タイトルは期間の初日(または月初)に表示、続く日は帯だけ
+                const showLabel =
+                  dateStr === t.departedOn || day === 1;
+                const isStart = dateStr === t.departedOn;
+                const isEnd = dateStr === travelEnd(t);
+                const rounding =
+                  isStart && isEnd
+                    ? "rounded"
+                    : isStart
+                      ? "-mr-1 rounded-l"
+                      : isEnd
+                        ? "-ml-1 rounded-r"
+                        : "-mx-1";
+                return showLabel ? (
+                  <p
+                    key={t.id}
+                    title={`${t.title}(${t.destination})${t.departedOn}〜${travelEnd(t)}`}
+                    className={`mt-0.5 truncate bg-gradient-to-r from-sky-400 to-blue-400 px-1 py-0.5 text-[10px] font-semibold text-white ${rounding}`}
+                  >
+                    ✈️ {t.title}
+                  </p>
+                ) : (
+                  <div
+                    key={t.id}
+                    title={`${t.title}(${t.destination})${t.departedOn}〜${travelEnd(t)}`}
+                    className={`mt-0.5 h-[19px] bg-gradient-to-r from-sky-300 to-blue-300 ${rounding}`}
+                  />
+                );
+              })}
             </div>
           );
         })}

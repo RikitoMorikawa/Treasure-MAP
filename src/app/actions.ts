@@ -9,10 +9,20 @@ import { climbs, travels } from "@/db/schema";
 function travelValues(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const destination = String(formData.get("destination") ?? "").trim();
-  const visitedOn = String(formData.get("visitedOn") ?? "").trim();
+  let departedOn = String(formData.get("departedOn") ?? "").trim();
+  let returnedOn = String(formData.get("returnedOn") ?? "").trim();
   const memo = String(formData.get("memo") ?? "").trim();
-  if (!title || !destination || !visitedOn) return null;
-  return { title, destination, visitedOn, memo: memo || null };
+  if (!title || !destination || !departedOn) return null;
+  if (returnedOn && returnedOn < departedOn) {
+    [departedOn, returnedOn] = [returnedOn, departedOn];
+  }
+  return {
+    title,
+    destination,
+    departedOn,
+    returnedOn: returnedOn || null,
+    memo: memo || null,
+  };
 }
 
 export async function addTravel(formData: FormData) {

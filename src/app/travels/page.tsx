@@ -24,9 +24,15 @@ export default async function TravelsPage({
   const rows = await db
     .select()
     .from(travels)
-    .orderBy(desc(travels.visitedOn), desc(travels.id));
+    .orderBy(desc(travels.departedOn), desc(travels.id));
 
-  const monthTravels = rows.filter((t) => t.visitedOn.startsWith(month));
+  // その月と期間が少しでも重なる旅行を対象にする
+  const monthStart = `${month}-01`;
+  const monthEnd = `${month}-31`;
+  const monthTravels = rows.filter(
+    (t) =>
+      t.departedOn <= monthEnd && (t.returnedOn ?? t.departedOn) >= monthStart,
+  );
 
   return (
     <div className="space-y-8">
@@ -77,7 +83,10 @@ export default async function TravelsPage({
                     </span>
                   </div>
                   <p className="mt-1 text-xs font-semibold text-slate-500">
-                    🗓 {t.visitedOn}
+                    🗓 {t.departedOn}
+                    {t.returnedOn && t.returnedOn !== t.departedOn
+                      ? ` 〜 ${t.returnedOn}`
+                      : ""}
                   </p>
                   {t.memo && (
                     <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
