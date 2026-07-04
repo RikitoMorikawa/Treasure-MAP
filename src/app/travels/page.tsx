@@ -98,6 +98,7 @@ export default async function TravelsPage() {
       city: d.city,
       arrivedOn: d.arrivedOn,
       leftOn: d.leftOn,
+      urls: d.urls,
     })),
   }));
 

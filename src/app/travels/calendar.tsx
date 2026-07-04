@@ -7,7 +7,16 @@ type CalendarDest = {
   city: string | null;
   arrivedOn: string | null;
   leftOn: string | null;
+  urls: string[];
 };
+
+function urlHost(u: string) {
+  try {
+    return new URL(u).hostname.replace(/^www\./, "");
+  } catch {
+    return u;
+  }
+}
 
 type CalendarTravel = {
   id: number;
@@ -37,36 +46,40 @@ function fmt(d: string) {
   return `${Number(m)}/${Number(day)}`;
 }
 
-// その日の出来事(移動・滞在)を文章にする
-function dayEvents(t: CalendarTravel, date: string): string[] {
-  const events: string[] = [];
-  if (t.departedOn === date) events.push("✈️ 出発日");
+type DayEvent = { text: string; urls: string[] };
+
+// その日の出来事(移動・滞在)を文章にする。
+// 到着・滞在イベントには行き先のホテルリンク等を添える
+function dayEvents(t: CalendarTravel, date: string): DayEvent[] {
+  const events: DayEvent[] = [];
+  if (t.departedOn === date) events.push({ text: "✈️ 出発日", urls: [] });
   t.dests.forEach((s, i) => {
     const name = destName(s);
     if (s.arrivedOn === date) {
       const prev = i > 0 ? destName(t.dests[i - 1]) : null;
-      events.push(
-        prev ? `🚝 ${prev} → ${name} へ移動・到着` : `🛬 ${name} に到着`,
-      );
+      events.push({
+        text: prev
+          ? `🚝 ${prev} → ${name} へ移動・到着`
+          : `🛬 ${name} に到着`,
+        urls: s.urls,
+      });
     }
     if (s.leftOn === date && s.arrivedOn !== date) {
       const isLast = i === t.dests.length - 1;
       const next = !isLast ? t.dests[i + 1] : null;
       // 次の行き先の到着日が同日ならそちらの「移動」で表現されるので重複させない
       if (!(next && next.arrivedOn === date)) {
-        events.push(`🛫 ${name} を出発`);
+        events.push({ text: `🛫 ${name} を出発`, urls: [] });
       }
     }
-    if (
-      s.arrivedOn &&
-      s.leftOn &&
-      s.arrivedOn < date &&
-      date < s.leftOn
-    ) {
-      events.push(`🏨 ${name} に滞在(${fmt(s.arrivedOn)}〜${fmt(s.leftOn)})`);
+    if (s.arrivedOn && s.leftOn && s.arrivedOn < date && date < s.leftOn) {
+      events.push({
+        text: `🏨 ${name} に滞在(${fmt(s.arrivedOn)}〜${fmt(s.leftOn)})`,
+        urls: s.urls,
+      });
     }
   });
-  if (t.returnedOn === date) events.push("🏠 帰国日");
+  if (t.returnedOn === date) events.push({ text: "🏠 帰国日", urls: [] });
   return events;
 }
 
@@ -263,7 +276,18 @@ export function TravelCalendar({
                     <ul className="mt-1.5 space-y-0.5">
                       {events.map((e, i) => (
                         <li key={i} className="text-sm text-slate-600">
-                          {e}
+                          {e.text}
+                          {e.urls.map((u, ui) => (
+                            <a
+                              key={ui}
+                              href={u}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ml-2 inline-flex items-center gap-0.5 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700 no-underline transition hover:bg-sky-200"
+                            >
+                              🔗 {urlHost(u)}
+                            </a>
+                          ))}
                         </li>
                       ))}
                     </ul>
