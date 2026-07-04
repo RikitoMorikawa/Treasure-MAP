@@ -312,7 +312,6 @@ export function TravelCalendar({
             <li key={t.id} className="flex flex-wrap items-center gap-2 text-xs">
               <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-gradient-to-br from-sky-400 to-blue-500" />
               <span className="font-bold text-slate-700">✈️ {t.title}</span>
-              <span className="text-slate-500">({t.destinationText})</span>
               <span className="font-semibold text-sky-600">
                 {t.departedOn}
                 {travelEnd(t) !== t.departedOn ? ` 〜 ${travelEnd(t)}` : ""}
