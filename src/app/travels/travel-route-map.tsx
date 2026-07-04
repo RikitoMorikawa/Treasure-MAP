@@ -46,13 +46,14 @@ const COLORS = [
   "#ca8a04", // yellow-600
 ];
 
-function numberIcon(n: number, color: string) {
+// ラベルは "1" だけでなく、同じ場所を複数回訪れた場合の "1・4" にも対応
+function numberIcon(label: string, color: string) {
   return L.divIcon({
-    html: `<div style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:9999px;background:${color};color:#fff;font-size:12px;font-weight:700;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4)">${n}</div>`,
+    html: `<div style="transform:translate(-50%,-50%);display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;padding:0 7px;border-radius:9999px;background:${color};color:#fff;font-size:12px;font-weight:700;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);white-space:nowrap">${label}</div>`,
     className: "",
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-    popupAnchor: [0, -12],
+    iconSize: [0, 0],
+    iconAnchor: [0, 0],
+    popupAnchor: [0, -14],
   });
 }
 
@@ -100,6 +101,17 @@ export default function TravelRouteMap({
         const positions = route.stops.map(
           (s) => [s.lat, s.lng] as [number, number],
         );
+        // 同一座標の訪問をまとめて「1・4」のような1つのピンにする
+        const grouped = new Map<
+          string,
+          { stop: RouteStop; order: number }[]
+        >();
+        route.stops.forEach((s, si) => {
+          const key = `${s.lat},${s.lng}`;
+          const list = grouped.get(key) ?? [];
+          list.push({ stop: s, order: si + 1 });
+          grouped.set(key, list);
+        });
         return (
           <div key={route.travelId}>
             {positions.length >= 2 && (
@@ -108,35 +120,47 @@ export default function TravelRouteMap({
                 pathOptions={{ color, weight: 3, dashArray: "6 6" }}
               />
             )}
-            {route.stops.map((s, si) => (
-              <Marker
-                key={s.id}
-                position={[s.lat, s.lng]}
-                icon={numberIcon(si + 1, color)}
-              >
-                <Popup>
-                  <b>✈️ {route.title}</b>
-                  <br />
-                  {si + 1}. {s.country}
-                  {s.cities.length > 0 && `(${s.cities.join("、")})`}
-                  {(s.arrivedOn || s.leftOn) && (
-                    <>
-                      <br />
-                      🛬 {s.arrivedOn ?? "?"} → 🛫 {s.leftOn ?? "?"}
-                    </>
-                  )}
-                  {s.urls.map((u, ui) => (
-                    <span key={ui}>
-                      <br />
-                      🏨{" "}
-                      <a href={u} target="_blank" rel="noopener noreferrer">
-                        {urlHost(u)}
-                      </a>
-                    </span>
-                  ))}
-                </Popup>
-              </Marker>
-            ))}
+            {[...grouped.values()].map((visits) => {
+              const { stop } = visits[0];
+              const label = visits.map((v) => v.order).join("・");
+              return (
+                <Marker
+                  key={stop.id}
+                  position={[stop.lat, stop.lng]}
+                  icon={numberIcon(label, color)}
+                >
+                  <Popup>
+                    <b>✈️ {route.title}</b>
+                    {visits.map(({ stop: s, order }) => (
+                      <span key={s.id}>
+                        <br />
+                        {order}. {s.country}
+                        {s.cities.length > 0 && `(${s.cities.join("、")})`}
+                        {(s.arrivedOn || s.leftOn) && (
+                          <>
+                            <br />
+                            　🛬 {s.arrivedOn ?? "?"} → 🛫 {s.leftOn ?? "?"}
+                          </>
+                        )}
+                        {s.urls.map((u, ui) => (
+                          <span key={ui}>
+                            <br />
+                            　🏨{" "}
+                            <a
+                              href={u}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {urlHost(u)}
+                            </a>
+                          </span>
+                        ))}
+                      </span>
+                    ))}
+                  </Popup>
+                </Marker>
+              );
+            })}
           </div>
         );
       })}
