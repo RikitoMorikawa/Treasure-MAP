@@ -12,6 +12,7 @@ import {
 import { deleteTravel } from "@/app/actions";
 import { TravelCalendar } from "./calendar";
 import { TravelsOverview } from "./overview";
+import { DestinationLines } from "./destination-lines";
 
 export const dynamic = "force-dynamic";
 
@@ -202,32 +203,22 @@ export default async function TravelsPage() {
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-bold">{t.title}</span>
-                    {(destsByTravel.get(t.id) ?? []).map((d) => (
-                      <span
-                        key={d.id}
-                        className="rounded-full bg-gradient-to-r from-sky-100 to-blue-100 px-2.5 py-0.5 text-xs font-semibold text-sky-700"
-                      >
-                        📍 {d.country}
-                        {d.city && (
-                          <span className="font-normal text-sky-500">
-                            ・{d.city}
-                          </span>
-                        )}
-                        {(d.arrivedOn || d.leftOn) && (
-                          <span className="ml-1 font-normal text-sky-400">
-                            {d.arrivedOn?.slice(5).replace("-", "/")}→
-                            {d.leftOn?.slice(5).replace("-", "/")}
-                          </span>
-                        )}
-                      </span>
-                    ))}
+                    <span className="text-xs font-semibold text-slate-500">
+                      🗓 {t.departedOn}
+                      {t.returnedOn && t.returnedOn !== t.departedOn
+                        ? ` 〜 ${t.returnedOn}`
+                        : ""}
+                    </span>
                   </div>
-                  <p className="mt-1 text-xs font-semibold text-slate-500">
-                    🗓 {t.departedOn}
-                    {t.returnedOn && t.returnedOn !== t.departedOn
-                      ? ` 〜 ${t.returnedOn}`
-                      : ""}
-                  </p>
+                  <DestinationLines
+                    dests={(destsByTravel.get(t.id) ?? []).map((d) => ({
+                      id: d.id,
+                      country: d.country,
+                      city: d.city,
+                      arrivedOn: d.arrivedOn,
+                      leftOn: d.leftOn,
+                    }))}
+                  />
                   {t.memo && (
                     <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
                       {t.memo}
