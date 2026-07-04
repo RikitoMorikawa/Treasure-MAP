@@ -19,7 +19,17 @@ export function urlHost(u: string) {
   }
 }
 
-export type CalendarFlight = { url: string; flownOn: string | null };
+export type CalendarFlight = {
+  url: string;
+  flownOn: string | null;
+  flownUntil: string | null;
+};
+
+// フライトがその日を含むか(到着日があれば期間扱い)
+export function flightCovers(f: CalendarFlight, date: string) {
+  if (!f.flownOn) return false;
+  return f.flownOn <= date && date <= (f.flownUntil ?? f.flownOn);
+}
 
 export type CalendarTravel = {
   id: number;
@@ -63,11 +73,17 @@ export function dayEvents(t: CalendarTravel, date: string): DayEvent[] {
   if (t.departedOn === date)
     events.push({ text: "✈️ 出発日", urls: undatedFlights });
   for (const f of t.flights) {
-    if (f.flownOn === date && f.flownOn !== t.departedOn) {
-      events.push({ text: "✈️ フライト(移動日)", urls: [f.url] });
-    } else if (f.flownOn === date && f.flownOn === t.departedOn) {
-      events.push({ text: "✈️ フライト", urls: [f.url] });
-    }
+    if (!flightCovers(f, date)) continue;
+    const range = f.flownUntil
+      ? `(${fmt(f.flownOn as string)}〜${fmt(f.flownUntil)})`
+      : "";
+    events.push({
+      text:
+        date === t.departedOn
+          ? `✈️ フライト${range}`
+          : `✈️ フライト(移動日)${range}`,
+      urls: [f.url],
+    });
   }
   t.dests.forEach((s, i) => {
     const name = destName(s);

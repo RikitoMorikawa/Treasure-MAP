@@ -31,21 +31,32 @@ function travelValues(formData: FormData) {
   };
 }
 
-// hidden input "flights" の JSON: [{ url, flownOn }](搭乗日は任意)。
+// hidden input "flights" の JSON: [{ url, flownOn, flownUntil }](日付は任意)。
 // フォームの表示順を sortOrder として保存する
-function parseFlights(
-  formData: FormData,
-): { url: string; flownOn: string | null; sortOrder: number }[] {
+function parseFlights(formData: FormData): {
+  url: string;
+  flownOn: string | null;
+  flownUntil: string | null;
+  sortOrder: number;
+}[] {
+  const date = (v: unknown) => {
+    const s = String(v ?? "").trim();
+    return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+  };
   try {
     const raw = JSON.parse(String(formData.get("flights") ?? "[]"));
     if (!Array.isArray(raw)) return [];
     return raw
-      .map((f) => ({
-        url: String(f?.url ?? "").trim(),
-        flownOn: /^\d{4}-\d{2}-\d{2}$/.test(String(f?.flownOn ?? "").trim())
-          ? String(f.flownOn).trim()
-          : null,
-      }))
+      .map((f) => {
+        let flownOn = date(f?.flownOn);
+        let flownUntil = date(f?.flownUntil);
+        if (flownOn && flownUntil && flownUntil < flownOn) {
+          [flownOn, flownUntil] = [flownUntil, flownOn];
+        }
+        // 同日なら期間なし扱い
+        if (flownOn && flownUntil === flownOn) flownUntil = null;
+        return { url: String(f?.url ?? "").trim(), flownOn, flownUntil };
+      })
       .filter((f) => /^https?:\/\/.+/.test(f.url))
       .map((f, i) => ({ ...f, sortOrder: i }));
   } catch {

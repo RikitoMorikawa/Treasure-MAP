@@ -57,11 +57,11 @@ export default async function TravelsPage() {
   const flightRows = await db.select().from(flights);
   const flightsByTravel = new Map<
     number,
-    { url: string; flownOn: string | null }[]
+    { url: string; flownOn: string | null; flownUntil: string | null }[]
   >();
   for (const f of flightRows) {
     const list = flightsByTravel.get(f.travelId) ?? [];
-    list.push({ url: f.url, flownOn: f.flownOn });
+    list.push({ url: f.url, flownOn: f.flownOn, flownUntil: f.flownUntil });
     flightsByTravel.set(f.travelId, list);
   }
 

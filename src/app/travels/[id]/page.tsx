@@ -170,6 +170,7 @@ export default async function TravelDetailPage({
             flights: flightRows.map((f) => ({
               url: f.url,
               flownOn: f.flownOn,
+              flownUntil: f.flownUntil,
             })),
             dests: dests.map((d) => ({
               country: d.country,
@@ -202,6 +203,8 @@ export default async function TravelDetailPage({
                     {item.flight.flownOn && (
                       <span className="ml-1.5 text-xs font-semibold text-indigo-500">
                         🗓 {fmt(item.flight.flownOn)}
+                        {item.flight.flownUntil &&
+                          ` 〜 ${fmt(item.flight.flownUntil)}`}
                       </span>
                     )}
                   </p>

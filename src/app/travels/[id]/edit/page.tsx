@@ -62,6 +62,7 @@ export default async function EditTravelPage({
         flightList={flightRows.map((f) => ({
           url: f.url,
           flownOn: f.flownOn,
+          flownUntil: f.flownUntil,
         }))}
         submitLabel="更新する"
       />

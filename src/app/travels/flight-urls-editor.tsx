@@ -2,15 +2,23 @@
 
 import { useState } from "react";
 
-export type FlightInput = { url: string; flownOn: string | null };
+export type FlightInput = {
+  url: string;
+  flownOn: string | null;
+  flownUntil: string | null;
+};
 
-type Row = { url: string; flownOn: string };
+type Row = { url: string; flownOn: string; flownUntil: string };
 
 // 航空券リンクの入力(旅行に紐づく。複数可、搭乗日付き、並び替え可)
 export function FlightUrlsEditor({ initial }: { initial?: FlightInput[] }) {
   const [rows, setRows] = useState<Row[]>(
     () =>
-      initial?.map((f) => ({ url: f.url, flownOn: f.flownOn ?? "" })) ?? [],
+      initial?.map((f) => ({
+        url: f.url,
+        flownOn: f.flownOn ?? "",
+        flownUntil: f.flownUntil ?? "",
+      })) ?? [],
   );
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
@@ -73,11 +81,20 @@ export function FlightUrlsEditor({ initial }: { initial?: FlightInput[] }) {
             className={`min-w-52 flex-1 ${inputCls}`}
           />
           <label className="flex items-center gap-1 text-xs text-slate-500">
-            🗓 搭乗日
+            🛫 出発日
             <input
               type="date"
               value={r.flownOn}
               onChange={(e) => update(i, { flownOn: e.target.value })}
+              className={inputCls}
+            />
+          </label>
+          <label className="flex items-center gap-1 text-xs text-slate-500">
+            🛬 到着日
+            <input
+              type="date"
+              value={r.flownUntil}
+              onChange={(e) => update(i, { flownUntil: e.target.value })}
               className={inputCls}
             />
           </label>
@@ -113,7 +130,9 @@ export function FlightUrlsEditor({ initial }: { initial?: FlightInput[] }) {
       ))}
       <button
         type="button"
-        onClick={() => setRows((rs) => [...rs, { url: "", flownOn: "" }])}
+        onClick={() =>
+          setRows((rs) => [...rs, { url: "", flownOn: "", flownUntil: "" }])
+        }
         className="rounded-full border border-indigo-300 px-3 py-1 text-xs font-bold text-indigo-600 transition hover:bg-indigo-50"
       >
         ✈️ 航空券を追加
@@ -126,6 +145,7 @@ export function FlightUrlsEditor({ initial }: { initial?: FlightInput[] }) {
             .map((r) => ({
               url: r.url.trim(),
               flownOn: r.flownOn || null,
+              flownUntil: r.flownUntil || null,
             }))
             .filter((r) => r.url),
         )}

@@ -26,6 +26,8 @@ export const flights = sqliteTable("flights", {
     .references(() => travels.id, { onDelete: "cascade" }),
   url: text("url").notNull(),
   flownOn: text("flown_on"),
+  // 到着日(深夜便など日をまたぐ場合。同日なら null)
+  flownUntil: text("flown_until"),
   sortOrder: integer("sort_order").notNull().default(0),
 });
 

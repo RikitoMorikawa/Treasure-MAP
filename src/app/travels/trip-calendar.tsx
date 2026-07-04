@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   dayEvents,
+  flightCovers,
   pad,
   travelEnd,
   urlHost,
@@ -88,8 +89,8 @@ export function TripCalendar({ travel }: { travel: CalendarTravel }) {
                   if (day === null) return <span key={i} />;
                   const dateStr = `${month}-${pad(day)}`;
                   const inTrip = start <= dateStr && dateStr <= end;
-                  const hasFlight = travel.flights.some(
-                    (f) => f.flownOn === dateStr,
+                  const hasFlight = travel.flights.some((f) =>
+                    flightCovers(f, dateStr),
                   );
                   const label = inTrip ? stayLabel(dateStr) : null;
                   const isSelected = dateStr === selected;
