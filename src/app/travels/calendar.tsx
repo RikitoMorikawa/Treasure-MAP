@@ -1,12 +1,21 @@
 "use client";
 
 import { useState } from "react";
+
+type CalendarDest = {
+  country: string;
+  city: string | null;
+  arrivedOn: string | null;
+  leftOn: string | null;
+};
+
 type CalendarTravel = {
   id: number;
   title: string;
   departedOn: string;
   returnedOn: string | null;
   destinationText: string;
+  dests: CalendarDest[];
 };
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
@@ -19,16 +28,62 @@ function travelEnd(t: CalendarTravel) {
   return t.returnedOn ?? t.departedOn;
 }
 
+function destName(d: CalendarDest) {
+  return d.city ? `${d.country}・${d.city}` : d.country;
+}
+
+function fmt(d: string) {
+  const [, m, day] = d.split("-");
+  return `${Number(m)}/${Number(day)}`;
+}
+
+// その日の出来事(移動・滞在)を文章にする
+function dayEvents(t: CalendarTravel, date: string): string[] {
+  const events: string[] = [];
+  if (t.departedOn === date) events.push("✈️ 出発日");
+  t.dests.forEach((s, i) => {
+    const name = destName(s);
+    if (s.arrivedOn === date) {
+      const prev = i > 0 ? destName(t.dests[i - 1]) : null;
+      events.push(
+        prev ? `🚝 ${prev} → ${name} へ移動・到着` : `🛬 ${name} に到着`,
+      );
+    }
+    if (s.leftOn === date && s.arrivedOn !== date) {
+      const isLast = i === t.dests.length - 1;
+      const next = !isLast ? t.dests[i + 1] : null;
+      // 次の行き先の到着日が同日ならそちらの「移動」で表現されるので重複させない
+      if (!(next && next.arrivedOn === date)) {
+        events.push(`🛫 ${name} を出発`);
+      }
+    }
+    if (
+      s.arrivedOn &&
+      s.leftOn &&
+      s.arrivedOn < date &&
+      date < s.leftOn
+    ) {
+      events.push(`🏨 ${name} に滞在(${fmt(s.arrivedOn)}〜${fmt(s.leftOn)})`);
+    }
+  });
+  if (t.returnedOn === date) events.push("🏠 帰国日");
+  return events;
+}
+
 function MiniMonth({
   year,
   mon,
   travels,
   today,
+  selected,
+  onSelect,
 }: {
   year: number;
   mon: number;
   travels: CalendarTravel[];
   today: string;
+  selected: string | null;
+  onSelect: (date: string) => void;
 }) {
   const month = `${year}-${pad(mon)}`;
   const firstWeekday = new Date(Date.UTC(year, mon - 1, 1)).getUTCDay();
@@ -67,9 +122,13 @@ function MiniMonth({
           );
           const isToday = dateStr === today;
           const covered = dayTravels.length > 0;
+          const isSelected = dateStr === selected;
           return (
-            <span
+            <button
               key={i}
+              type="button"
+              disabled={!covered}
+              onClick={() => onSelect(dateStr)}
               title={
                 covered
                   ? dayTravels
@@ -82,12 +141,14 @@ function MiniMonth({
               }
               className={`mx-auto flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
                 covered
-                  ? "bg-gradient-to-br from-sky-400 to-blue-500 font-bold text-white"
+                  ? "cursor-pointer bg-gradient-to-br from-sky-400 to-blue-500 font-bold text-white transition hover:scale-125"
                   : "text-slate-500"
-              } ${isToday ? "ring-2 ring-amber-400" : ""}`}
+              } ${isToday ? "ring-2 ring-amber-400" : ""} ${
+                isSelected ? "scale-125 ring-2 ring-rose-400" : ""
+              }`}
             >
               {day}
-            </span>
+            </button>
           );
         })}
       </div>
@@ -103,6 +164,7 @@ export function TravelCalendar({
   initialYear: number;
 }) {
   const [year, setYear] = useState(initialYear);
+  const [selected, setSelected] = useState<string | null>(null);
 
   const today = new Date().toLocaleDateString("en-CA", {
     timeZone: "Asia/Tokyo",
@@ -116,6 +178,12 @@ export function TravelCalendar({
   const yearTravels = travels.filter(
     (t) => t.departedOn <= yearEnd && travelEnd(t) >= yearStart,
   );
+
+  const selectedTravels = selected
+    ? travels.filter(
+        (t) => t.departedOn <= selected && selected <= travelEnd(t),
+      )
+    : [];
 
   const navBtn =
     "rounded-full px-3 py-1 text-sm font-bold text-sky-500 transition hover:bg-sky-100";
@@ -157,9 +225,62 @@ export function TravelCalendar({
             mon={i + 1}
             travels={yearTravels}
             today={today}
+            selected={selected}
+            onSelect={(d) => setSelected((cur) => (cur === d ? null : d))}
           />
         ))}
       </div>
+
+      {selected && selectedTravels.length > 0 && (
+        <div className="mt-4 rounded-xl border-2 border-rose-200 bg-rose-50/50 p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h4 className="text-sm font-extrabold text-slate-700">
+              📅 {selected.replace(/-/g, "/")} の予定
+            </h4>
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="rounded-full px-2 py-0.5 text-xs font-bold text-slate-400 transition hover:bg-white hover:text-rose-500"
+            >
+              ✕ 閉じる
+            </button>
+          </div>
+          <div className="space-y-3">
+            {selectedTravels.map((t) => {
+              const events = dayEvents(t, selected);
+              return (
+                <div key={t.id} className="rounded-lg bg-white p-3 shadow-sm">
+                  <p className="text-sm font-bold text-slate-700">
+                    ✈️ {t.title}
+                    <span className="ml-2 text-xs font-semibold text-slate-400">
+                      {t.departedOn}
+                      {travelEnd(t) !== t.departedOn
+                        ? ` 〜 ${travelEnd(t)}`
+                        : ""}
+                    </span>
+                  </p>
+                  {events.length > 0 ? (
+                    <ul className="mt-1.5 space-y-0.5">
+                      {events.map((e, i) => (
+                        <li key={i} className="text-sm text-slate-600">
+                          {e}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-1.5 text-sm text-slate-500">
+                      行き先: {t.destinationText}
+                      <span className="ml-1 text-xs text-slate-400">
+                        (都市ごとの到着日・出発日を入れると、この日の滞在・移動が表示されます)
+                      </span>
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {yearTravels.length > 0 && (
         <ul className="mt-4 space-y-1 border-t border-sky-100 pt-3">

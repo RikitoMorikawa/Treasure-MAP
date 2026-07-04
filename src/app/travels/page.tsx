@@ -93,6 +93,12 @@ export default async function TravelsPage() {
     departedOn: t.departedOn,
     returnedOn: t.returnedOn,
     destinationText: destText(t.id),
+    dests: (destsByTravel.get(t.id) ?? []).map((d) => ({
+      country: d.country,
+      city: d.city,
+      arrivedOn: d.arrivedOn,
+      leftOn: d.leftOn,
+    })),
   }));
 
   // 座標を持つ行き先を並び順(sort_order)どおりに経路にする
