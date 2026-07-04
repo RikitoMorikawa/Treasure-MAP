@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { cities, countries, travelDestinations, travels } from "@/db/schema";
+import { travelDestinations, travels } from "@/db/schema";
 import { updateTravel } from "@/app/actions";
 import { TravelForm } from "../../travel-form";
+import { getMasters } from "../../masters";
 
 export const dynamic = "force-dynamic";
 
@@ -29,18 +30,7 @@ export default async function EditTravelPage({
     .where(eq(travelDestinations.travelId, numId))
     .orderBy(asc(travelDestinations.sortOrder), asc(travelDestinations.id));
 
-  const countryRows = await db
-    .select()
-    .from(countries)
-    .orderBy(asc(countries.name));
-  const cityRows = await db.select().from(cities).orderBy(asc(cities.name));
-  const masters = countryRows.map((co) => ({
-    id: co.id,
-    name: co.name,
-    cities: cityRows
-      .filter((ci) => ci.countryId === co.id)
-      .map((ci) => ({ id: ci.id, name: ci.name })),
-  }));
+  const masters = await getMasters();
 
   return (
     <div className="space-y-6">

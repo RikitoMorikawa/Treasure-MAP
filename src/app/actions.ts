@@ -290,6 +290,7 @@ export async function addTravel(formData: FormData) {
     .insert(travelDestinations)
     .values(resolved.map((d) => ({ ...d, travelId: row.id })));
   revalidatePath("/travels");
+  redirect("/travels");
 }
 
 export async function updateTravel(formData: FormData) {
@@ -359,6 +360,7 @@ export async function addClimb(formData: FormData) {
   if (!values) return;
   await db.insert(climbs).values(values);
   revalidatePath("/climbs");
+  redirect("/climbs");
 }
 
 export async function updateClimb(formData: FormData) {

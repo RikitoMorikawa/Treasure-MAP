@@ -2,9 +2,8 @@ import Link from "next/link";
 import { desc } from "drizzle-orm";
 import { db } from "@/db";
 import { climbs } from "@/db/schema";
-import { addClimb, deleteClimb } from "@/app/actions";
+import { deleteClimb } from "@/app/actions";
 import { ClimbMap } from "./client-widgets";
-import { ClimbForm } from "./climb-form";
 import { weatherEmoji } from "./constants";
 
 export const dynamic = "force-dynamic";
@@ -44,9 +43,21 @@ export default async function ClimbsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-5 text-white shadow-lg shadow-emerald-200">
-        <h1 className="text-2xl font-extrabold tracking-tight">⛰️ 登山記録</h1>
-        <p className="mt-1 text-sm text-emerald-100">登った山を記録します。</p>
+      <div className="flex items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 px-6 py-5 text-white shadow-lg shadow-emerald-200">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight">
+            ⛰️ 登山記録
+          </h1>
+          <p className="mt-1 text-sm text-emerald-100">
+            登った山を記録します。
+          </p>
+        </div>
+        <Link
+          href="/climbs/new"
+          className="shrink-0 rounded-full bg-white px-4 py-2 text-sm font-bold text-emerald-600 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
+        >
+          ＋ 記録を追加
+        </Link>
       </div>
 
       <section className="space-y-3">
@@ -59,13 +70,6 @@ export default async function ClimbsPage() {
         <div className="overflow-hidden rounded-2xl border-2 border-emerald-200 shadow-md">
           <ClimbMap pins={pins} />
         </div>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="border-l-4 border-emerald-500 pl-3 font-bold text-slate-800">
-          ＋ 新しい記録を追加
-        </h2>
-        <ClimbForm action={addClimb} submitLabel="追加する" />
       </section>
 
       <section className="space-y-3">

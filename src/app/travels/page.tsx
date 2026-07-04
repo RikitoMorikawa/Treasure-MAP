@@ -2,9 +2,8 @@ import Link from "next/link";
 import { asc, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { cities, countries, travelDestinations, travels } from "@/db/schema";
-import { addTravel, deleteTravel } from "@/app/actions";
+import { deleteTravel } from "@/app/actions";
 import { TravelCalendar } from "./calendar";
-import { TravelForm } from "./travel-form";
 import { TravelRouteMap } from "./client-widgets";
 
 export const dynamic = "force-dynamic";
@@ -88,20 +87,6 @@ export default async function TravelsPage() {
     destRows.filter((d) => d.city).map((d) => `${d.country}:${d.city}`),
   ).size;
 
-  // フォーム用マスター(国 → 都市)
-  const countryRows = await db
-    .select()
-    .from(countries)
-    .orderBy(asc(countries.name));
-  const cityRows = await db.select().from(cities).orderBy(asc(cities.name));
-  const masters = countryRows.map((co) => ({
-    id: co.id,
-    name: co.name,
-    cities: cityRows
-      .filter((ci) => ci.countryId === co.id)
-      .map((ci) => ({ id: ci.id, name: ci.name })),
-  }));
-
   const calendarTravels = rows.map((t) => ({
     id: t.id,
     title: t.title,
@@ -140,11 +125,21 @@ export default async function TravelsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-5 text-white shadow-lg shadow-sky-200">
-        <h1 className="text-2xl font-extrabold tracking-tight">✈️ 旅行記録</h1>
-        <p className="mt-1 text-sm text-sky-100">
-          行った場所と思い出を記録します。
-        </p>
+      <div className="flex items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-5 text-white shadow-lg shadow-sky-200">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight">
+            ✈️ 旅行記録
+          </h1>
+          <p className="mt-1 text-sm text-sky-100">
+            行った場所と思い出を記録します。
+          </p>
+        </div>
+        <Link
+          href="/travels/new"
+          className="shrink-0 rounded-full bg-white px-4 py-2 text-sm font-bold text-sky-600 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
+        >
+          ＋ 記録を追加
+        </Link>
       </div>
 
       <section className="space-y-3">
@@ -214,13 +209,6 @@ export default async function TravelsPage() {
         <div className="overflow-hidden rounded-2xl border-2 border-sky-200 shadow-md">
           <TravelRouteMap routes={routes} />
         </div>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
-          ＋ 新しい記録を追加
-        </h2>
-        <TravelForm action={addTravel} masters={masters} submitLabel="追加する" />
       </section>
 
       <section className="space-y-3">
