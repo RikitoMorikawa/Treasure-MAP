@@ -43,18 +43,18 @@ export default async function ClimbsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 px-5 py-4 text-white shadow-lg shadow-emerald-200 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-5">
-        <div>
+      <div className="flex items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 px-5 py-4 text-white shadow-lg shadow-emerald-200 sm:gap-4 sm:px-6 sm:py-5">
+        <div className="min-w-0">
           <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">
             ⛰️ 登山記録
           </h1>
-          <p className="mt-1 text-sm text-emerald-100">
+          <p className="mt-1 text-xs text-emerald-100 sm:text-sm">
             登った山を記録します。
           </p>
         </div>
         <Link
           href="/climbs/new"
-          className="shrink-0 self-start rounded-full bg-white px-4 py-2 text-sm font-bold text-emerald-600 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg sm:self-auto"
+          className="shrink-0 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-emerald-600 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg sm:px-4 sm:py-2 sm:text-sm"
         >
           ＋ 記録を追加
         </Link>
