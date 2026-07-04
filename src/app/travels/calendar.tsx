@@ -51,8 +51,9 @@ export function travelEnd(t: CalendarTravel) {
   return t.returnedOn ?? t.departedOn;
 }
 
+// 日別詳細では都市名だけを表示(都市未指定の行き先のみ国名)
 export function destName(d: CalendarDest) {
-  return d.city ? `${d.country}・${d.city}` : d.country;
+  return d.city ?? d.country;
 }
 
 export function fmt(d: string) {
