@@ -32,16 +32,16 @@ export function TripCalendar({ travel }: { travel: CalendarTravel }) {
   const end = travelEnd(travel);
   const months = monthsBetween(start, end);
 
-  // その日に滞在している行き先の表示名(都市優先)
-  const stayLabel = (date: string) => {
-    const stay = travel.dests.find(
-      (d) =>
-        d.arrivedOn &&
-        d.leftOn &&
-        d.arrivedOn <= date &&
-        date <= d.leftOn,
-    );
-    return stay ? (stay.city ?? stay.country) : null;
+  // その日に滞在している行き先の表示名(都市優先)。
+  // 移動日は前の都市の出発と次の都市の到着が重なるため複数返る
+  const stayLabels = (date: string) => {
+    const names = travel.dests
+      .filter(
+        (d) =>
+          d.arrivedOn && d.leftOn && d.arrivedOn <= date && date <= d.leftOn,
+      )
+      .map((d) => d.city ?? d.country);
+    return [...new Set(names)];
   };
 
   return (
@@ -88,7 +88,7 @@ export function TripCalendar({ travel }: { travel: CalendarTravel }) {
                   const hasFlight = travel.flights.some((f) =>
                     flightCovers(f, dateStr),
                   );
-                  const label = inTrip ? stayLabel(dateStr) : null;
+                  const labels = inTrip ? stayLabels(dateStr) : [];
                   return (
                     <span key={i} className="group relative">
                       <span
@@ -106,11 +106,14 @@ export function TripCalendar({ travel }: { travel: CalendarTravel }) {
                           {day}
                           {hasFlight && " ✈️"}
                         </span>
-                        {label && (
-                          <span className="mt-0.5 w-full truncate rounded bg-gradient-to-r from-sky-400 to-blue-400 px-0.5 text-[9px] font-semibold text-white">
+                        {labels.map((label) => (
+                          <span
+                            key={label}
+                            className="mt-0.5 w-full truncate rounded bg-gradient-to-r from-sky-400 to-blue-400 px-0.5 text-[9px] font-semibold text-white"
+                          >
                             {label}
                           </span>
-                        )}
+                        ))}
                       </span>
                       {inTrip && (
                         <DayPopup date={dateStr} travels={[travel]} />
