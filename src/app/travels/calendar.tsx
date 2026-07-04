@@ -117,8 +117,8 @@ export function dayEvents(t: CalendarTravel, date: string): DayEvent[] {
   return events;
 }
 
-// ホバーで表示する日別詳細ポップアップ
-function DayPopup({ date, travels }: { date: string; travels: CalendarTravel[] }) {
+// ホバーで表示する日別詳細ポップアップ(年間・旅程カレンダー共用)
+export function DayPopup({ date, travels }: { date: string; travels: CalendarTravel[] }) {
   return (
     <div className="pointer-events-auto absolute bottom-full left-1/2 z-30 mb-1.5 hidden w-72 -translate-x-1/2 rounded-xl border-2 border-sky-200 bg-white p-3 text-left shadow-xl group-hover:block">
       <p className="mb-1.5 text-xs font-extrabold text-slate-700">
