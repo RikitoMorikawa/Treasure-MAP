@@ -67,20 +67,20 @@ export function TravelsOverview({
           </div>
         </div>
         {countryStats.length > 0 && (
-          <div className="rounded-2xl border-2 border-sky-200 bg-white p-4 shadow-md">
-            <p className="mb-2 text-xs font-semibold text-slate-500">
+          <div className="rounded-2xl border-2 border-sky-200 bg-white p-3 shadow-md sm:p-4">
+            <p className="mb-1.5 text-xs font-semibold text-slate-500 sm:mb-2">
               国ごとの訪問回数
-              <span className="ml-2 font-normal text-slate-400">
+              <span className="ml-2 hidden font-normal text-slate-400 sm:inline">
                 クリックすると下のマップでその国にズームします
               </span>
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {countryStats.map((c) => (
                 <button
                   key={c.name}
                   type="button"
                   onClick={() => zoomToCountry(c.name)}
-                  className={`rounded-full px-3 py-1 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow ${
+                  className={`rounded-full px-2 py-0.5 text-xs font-semibold transition hover:-translate-y-0.5 hover:shadow sm:px-3 sm:py-1 sm:text-sm ${
                     focusCountry === c.name
                       ? "bg-gradient-to-r from-sky-500 to-blue-500 text-white"
                       : "bg-gradient-to-r from-sky-100 to-blue-100 text-sky-700"
@@ -88,7 +88,7 @@ export function TravelsOverview({
                 >
                   {c.name}
                   <span
-                    className={`ml-1.5 rounded-full px-1.5 py-0.5 text-xs font-bold ${
+                    className={`ml-1 rounded-full px-1 py-0.5 text-[10px] font-bold sm:ml-1.5 sm:px-1.5 sm:text-xs ${
                       focusCountry === c.name
                         ? "bg-white text-sky-600"
                         : "bg-sky-500 text-white"
