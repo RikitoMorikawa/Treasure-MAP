@@ -26,6 +26,7 @@ export const flights = sqliteTable("flights", {
     .references(() => travels.id, { onDelete: "cascade" }),
   url: text("url").notNull(),
   flownOn: text("flown_on"),
+  sortOrder: integer("sort_order").notNull().default(0),
 });
 
 // 国マスター。座標は国の代表点(都市未指定の行き先のピンに使う)

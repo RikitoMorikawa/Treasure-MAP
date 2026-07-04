@@ -63,9 +63,37 @@ export default async function TravelDetailPage({
   const hotelRows = await db.select().from(hotels);
   const hotelUrls = (destId: number) =>
     hotelRows.filter((h) => h.destinationId === destId).map((h) => h.url);
-  const flightRows = (
-    await db.select().from(flights).where(eq(flights.travelId, numId))
-  ).sort((a, b) => (a.flownOn ?? "").localeCompare(b.flownOn ?? ""));
+  const flightRows = await db
+    .select()
+    .from(flights)
+    .where(eq(flights.travelId, numId))
+    .orderBy(asc(flights.sortOrder), asc(flights.id));
+
+  // 行程タイムライン: フライトは搭乗日をもとに「その日に到着する行き先の直前」へ挿入。
+  // 搭乗日なしのフライトは末尾に(並び順は保存された順)
+  type TimelineItem =
+    | { kind: "dest"; dest: (typeof dests)[number]; num: number }
+    | { kind: "flight"; flight: (typeof flightRows)[number] };
+  const timeline: TimelineItem[] = dests.map((d, i) => ({
+    kind: "dest" as const,
+    dest: d,
+    num: i + 1,
+  }));
+  for (const f of flightRows) {
+    const item: TimelineItem = { kind: "flight", flight: f };
+    if (f.flownOn) {
+      const idx = timeline.findIndex(
+        (it) =>
+          it.kind === "dest" &&
+          it.dest.arrivedOn != null &&
+          it.dest.arrivedOn >= (f.flownOn as string),
+      );
+      if (idx === -1) timeline.push(item);
+      else timeline.splice(idx, 0, item);
+    } else {
+      timeline.push(item);
+    }
+  }
 
   const stops = dests
     .map((d) => ({
@@ -154,47 +182,76 @@ export default async function TravelDetailPage({
           📍 行程
         </h2>
         <ol className="space-y-2">
-          {dests.map((d, i) => (
-            <li
-              key={d.id}
-              className="flex items-start gap-3 rounded-2xl border-2 border-sky-200 bg-white p-4 shadow-md"
-            >
-              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-blue-500 text-sm font-bold text-white">
-                {i + 1}
-              </span>
-              <div className="min-w-0">
-                <p className="font-bold text-slate-700">
-                  {d.country}
-                  {d.city && (
-                    <span className="font-semibold text-sky-600">
-                      ・{d.city}
-                    </span>
-                  )}
-                </p>
-                {(d.arrivedOn || d.leftOn) && (
-                  <p className="mt-0.5 text-xs font-semibold text-slate-500">
-                    🛬 {d.arrivedOn ? fmt(d.arrivedOn) : "?"} → 🛫{" "}
-                    {d.leftOn ? fmt(d.leftOn) : "?"}
+          {timeline.map((item) =>
+            item.kind === "flight" ? (
+              <li
+                key={`f-${item.flight.id}`}
+                className="flex items-center gap-3 rounded-2xl border-2 border-dashed border-indigo-300 bg-indigo-50/60 px-4 py-3"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-violet-500 text-sm text-white">
+                  ✈️
+                </span>
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <p className="text-sm font-bold text-indigo-700">
+                    フライト(移動)
+                    {item.flight.flownOn && (
+                      <span className="ml-1.5 text-xs font-semibold text-indigo-500">
+                        🗓 {fmt(item.flight.flownOn)}
+                      </span>
+                    )}
                   </p>
-                )}
-                {hotelUrls(d.id).length > 0 && (
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {hotelUrls(d.id).map((u, ui) => (
-                      <a
-                        key={ui}
-                        href={u}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-200"
-                      >
-                        🔗 {urlHost(u)}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </li>
-          ))}
+                  <a
+                    href={item.flight.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-200"
+                  >
+                    🔗 {urlHost(item.flight.url)}
+                  </a>
+                </div>
+              </li>
+            ) : (
+              <li
+                key={`d-${item.dest.id}`}
+                className="flex items-start gap-3 rounded-2xl border-2 border-sky-200 bg-white p-4 shadow-md"
+              >
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-blue-500 text-sm font-bold text-white">
+                  {item.num}
+                </span>
+                <div className="min-w-0">
+                  <p className="font-bold text-slate-700">
+                    {item.dest.country}
+                    {item.dest.city && (
+                      <span className="font-semibold text-sky-600">
+                        ・{item.dest.city}
+                      </span>
+                    )}
+                  </p>
+                  {(item.dest.arrivedOn || item.dest.leftOn) && (
+                    <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                      🛬 {item.dest.arrivedOn ? fmt(item.dest.arrivedOn) : "?"}{" "}
+                      → 🛫 {item.dest.leftOn ? fmt(item.dest.leftOn) : "?"}
+                    </p>
+                  )}
+                  {hotelUrls(item.dest.id).length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {hotelUrls(item.dest.id).map((u, ui) => (
+                        <a
+                          key={ui}
+                          href={u}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-200"
+                        >
+                          🔗 {urlHost(u)}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </li>
+            ),
+          )}
         </ol>
       </section>
 

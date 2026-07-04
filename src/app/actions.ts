@@ -31,8 +31,11 @@ function travelValues(formData: FormData) {
   };
 }
 
-// hidden input "flights" の JSON: [{ url, flownOn }](搭乗日は任意)
-function parseFlights(formData: FormData): { url: string; flownOn: string | null }[] {
+// hidden input "flights" の JSON: [{ url, flownOn }](搭乗日は任意)。
+// フォームの表示順を sortOrder として保存する
+function parseFlights(
+  formData: FormData,
+): { url: string; flownOn: string | null; sortOrder: number }[] {
   try {
     const raw = JSON.parse(String(formData.get("flights") ?? "[]"));
     if (!Array.isArray(raw)) return [];
@@ -43,7 +46,8 @@ function parseFlights(formData: FormData): { url: string; flownOn: string | null
           ? String(f.flownOn).trim()
           : null,
       }))
-      .filter((f) => /^https?:\/\/.+/.test(f.url));
+      .filter((f) => /^https?:\/\/.+/.test(f.url))
+      .map((f, i) => ({ ...f, sortOrder: i }));
   } catch {
     return [];
   }
