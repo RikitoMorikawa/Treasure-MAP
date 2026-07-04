@@ -29,7 +29,7 @@ export default function ClimbMap({ pins }: { pins: ClimbPin[] }) {
       center={JAPAN_CENTER}
       zoom={5}
       scrollWheelZoom
-      className="z-0 h-80 w-full rounded-2xl"
+      className="z-0 h-64 w-full rounded-2xl sm:h-80"
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

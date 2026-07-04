@@ -36,29 +36,29 @@ export function TravelsOverview({
           📊 旅の記録
         </h2>
         <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-2xl border-2 border-sky-200 bg-white p-4 text-center shadow-md">
-            <p className="text-xs font-semibold text-slate-500">✈️ 旅行回数</p>
-            <p className="mt-1 text-3xl font-extrabold text-sky-600">
+          <div className="rounded-2xl border-2 border-sky-200 bg-white p-2.5 text-center shadow-md sm:p-4">
+            <p className="text-[10px] font-semibold text-slate-500 sm:text-xs">✈️ 旅行回数</p>
+            <p className="mt-1 text-2xl font-extrabold text-sky-600 sm:text-3xl">
               {travelCount}
               <span className="ml-1 text-sm font-semibold text-slate-400">
                 回
               </span>
             </p>
           </div>
-          <div className="rounded-2xl border-2 border-sky-200 bg-white p-4 text-center shadow-md">
-            <p className="text-xs font-semibold text-slate-500">🌍 訪問国数</p>
-            <p className="mt-1 text-3xl font-extrabold text-sky-600">
+          <div className="rounded-2xl border-2 border-sky-200 bg-white p-2.5 text-center shadow-md sm:p-4">
+            <p className="text-[10px] font-semibold text-slate-500 sm:text-xs">🌍 訪問国数</p>
+            <p className="mt-1 text-2xl font-extrabold text-sky-600 sm:text-3xl">
               {countryStats.length}
               <span className="ml-1 text-sm font-semibold text-slate-400">
                 ヶ国
               </span>
             </p>
           </div>
-          <div className="rounded-2xl border-2 border-sky-200 bg-white p-4 text-center shadow-md">
-            <p className="text-xs font-semibold text-slate-500">
+          <div className="rounded-2xl border-2 border-sky-200 bg-white p-2.5 text-center shadow-md sm:p-4">
+            <p className="text-[10px] font-semibold text-slate-500 sm:text-xs">
               🏙 訪問都市数
             </p>
-            <p className="mt-1 text-3xl font-extrabold text-sky-600">
+            <p className="mt-1 text-2xl font-extrabold text-sky-600 sm:text-3xl">
               {cityCount}
               <span className="ml-1 text-sm font-semibold text-slate-400">
                 都市

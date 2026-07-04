@@ -106,7 +106,7 @@ export default function TravelRouteMap({
       center={[30, 90]}
       zoom={2}
       scrollWheelZoom
-      className="z-0 h-96 w-full rounded-2xl"
+      className="z-0 h-72 w-full rounded-2xl sm:h-96"
     >
       {fitToStops && allPositions.length > 0 && (
         <FitToStops positions={allPositions} />

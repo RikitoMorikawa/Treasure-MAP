@@ -151,9 +151,9 @@ export default async function TravelsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-5 text-white shadow-lg shadow-sky-200">
+      <div className="flex flex-col gap-3 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 px-5 py-4 text-white shadow-lg shadow-sky-200 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-5">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">
+          <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">
             ✈️ 旅行記録
           </h1>
           <p className="mt-1 text-sm text-sky-100">
@@ -162,7 +162,7 @@ export default async function TravelsPage() {
         </div>
         <Link
           href="/travels/new"
-          className="shrink-0 rounded-full bg-white px-4 py-2 text-sm font-bold text-sky-600 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
+          className="shrink-0 self-start rounded-full bg-white px-4 py-2 text-sm font-bold text-sky-600 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg sm:self-auto"
         >
           ＋ 記録を追加
         </Link>
@@ -198,7 +198,7 @@ export default async function TravelsPage() {
             {rows.map((t) => (
               <li
                 key={t.id}
-                className="flex items-start justify-between gap-4 rounded-2xl border-2 border-sky-200 bg-white p-5 shadow-md transition hover:border-sky-400 hover:shadow-lg"
+                className="flex flex-col gap-2 rounded-2xl border-2 border-sky-200 bg-white p-4 shadow-md transition hover:border-sky-400 hover:shadow-lg sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:p-5"
               >
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -225,7 +225,7 @@ export default async function TravelsPage() {
                     </p>
                   )}
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
+                <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
                   <Link
                     href={`/travels/${t.id}`}
                     className="rounded-full bg-sky-500 px-2.5 py-1 text-xs font-bold text-white transition hover:bg-sky-600"

@@ -125,9 +125,9 @@ export default async function TravelDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-5 text-white shadow-lg shadow-sky-200">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">
+      <div className="flex flex-col gap-3 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 px-5 py-4 text-white shadow-lg shadow-sky-200 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-5">
+        <div className="min-w-0">
+          <h1 className="text-xl font-extrabold tracking-tight break-words sm:text-2xl">
             ✈️ {travel.title}
           </h1>
           <p className="mt-1 text-sm text-sky-100">
@@ -139,7 +139,7 @@ export default async function TravelDetailPage({
         </div>
         <Link
           href={`/travels/${travel.id}/edit`}
-          className="shrink-0 rounded-full bg-white px-4 py-2 text-sm font-bold text-sky-600 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
+          className="shrink-0 self-start rounded-full bg-white px-4 py-2 text-sm font-bold text-sky-600 shadow-md transition hover:-translate-y-0.5 hover:shadow-lg sm:self-auto"
         >
           ✏️ 編集
         </Link>

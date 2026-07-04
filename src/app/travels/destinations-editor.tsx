@@ -192,7 +192,7 @@ export function DestinationsEditor({
                   list={`${uid}-countries`}
                   required={i === 0}
                   placeholder="国(入力で検索)"
-                  className={`w-40 ${inputCls}`}
+                  className={`w-full sm:w-40 ${inputCls}`}
                 />
                 <Badge isNew={!co} filled={r.country.trim() !== ""} />
               </div>
@@ -208,7 +208,7 @@ export function DestinationsEditor({
                   }
                   list={cityListId}
                   placeholder="都市(空欄なら国のみ)"
-                  className={`w-44 ${inputCls}`}
+                  className={`w-full sm:w-44 ${inputCls}`}
                 />
                 <Badge isNew={!ci} filled={r.city.trim() !== ""} />
               </div>
