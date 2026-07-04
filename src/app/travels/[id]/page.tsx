@@ -11,6 +11,7 @@ import {
   travels,
 } from "@/db/schema";
 import { TravelRouteMap } from "../client-widgets";
+import { TripCalendar } from "../trip-calendar";
 
 export const dynamic = "force-dynamic";
 
@@ -144,28 +145,6 @@ export default async function TravelDetailPage({
         </Link>
       </div>
 
-      {flightRows.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
-            ✈️ 航空券
-          </h2>
-          <div className="flex flex-wrap gap-2 rounded-2xl border-2 border-sky-200 bg-white p-4 shadow-md">
-            {flightRows.map((f) => (
-              <a
-                key={f.id}
-                href={f.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-full bg-indigo-100 px-3 py-1 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-200"
-              >
-                ✈️ {f.flownOn ? `${fmt(f.flownOn)} ` : ""}
-                {urlHost(f.url)}
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
-
       {routes.length > 0 && (
         <section className="space-y-3">
           <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
@@ -176,6 +155,32 @@ export default async function TravelDetailPage({
           </div>
         </section>
       )}
+
+      <section className="space-y-3">
+        <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
+          🗓 旅程カレンダー
+        </h2>
+        <TripCalendar
+          travel={{
+            id: travel.id,
+            title: travel.title,
+            departedOn: travel.departedOn,
+            returnedOn: travel.returnedOn,
+            destinationText: "",
+            flights: flightRows.map((f) => ({
+              url: f.url,
+              flownOn: f.flownOn,
+            })),
+            dests: dests.map((d) => ({
+              country: d.country,
+              city: d.city,
+              arrivedOn: d.arrivedOn,
+              leftOn: d.leftOn,
+              urls: hotelUrls(d.id),
+            })),
+          }}
+        />
+      </section>
 
       <section className="space-y-3">
         <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">

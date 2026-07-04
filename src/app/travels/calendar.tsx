@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-type CalendarDest = {
+export type CalendarDest = {
   country: string;
   city: string | null;
   arrivedOn: string | null;
@@ -11,7 +11,7 @@ type CalendarDest = {
   urls: string[];
 };
 
-function urlHost(u: string) {
+export function urlHost(u: string) {
   try {
     return new URL(u).hostname.replace(/^www\./, "");
   } catch {
@@ -19,9 +19,9 @@ function urlHost(u: string) {
   }
 }
 
-type CalendarFlight = { url: string; flownOn: string | null };
+export type CalendarFlight = { url: string; flownOn: string | null };
 
-type CalendarTravel = {
+export type CalendarTravel = {
   id: number;
   title: string;
   departedOn: string;
@@ -33,28 +33,28 @@ type CalendarTravel = {
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
-function pad(n: number) {
+export function pad(n: number) {
   return String(n).padStart(2, "0");
 }
 
-function travelEnd(t: CalendarTravel) {
+export function travelEnd(t: CalendarTravel) {
   return t.returnedOn ?? t.departedOn;
 }
 
-function destName(d: CalendarDest) {
+export function destName(d: CalendarDest) {
   return d.city ? `${d.country}・${d.city}` : d.country;
 }
 
-function fmt(d: string) {
+export function fmt(d: string) {
   const [, m, day] = d.split("-");
   return `${Number(m)}/${Number(day)}`;
 }
 
-type DayEvent = { text: string; urls: string[] };
+export type DayEvent = { text: string; urls: string[] };
 
 // その日の出来事(移動・滞在)を文章にする。
 // 到着・滞在イベントには行き先のホテルリンク等を添える
-function dayEvents(t: CalendarTravel, date: string): DayEvent[] {
+export function dayEvents(t: CalendarTravel, date: string): DayEvent[] {
   const events: DayEvent[] = [];
   // 搭乗日なしの航空券は出発日・帰国日に添える。搭乗日ありはその日に表示
   const undatedFlights = t.flights
