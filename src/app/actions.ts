@@ -21,11 +21,26 @@ function travelValues(formData: FormData) {
   if (returnedOn && returnedOn < departedOn) {
     [departedOn, returnedOn] = [returnedOn, departedOn];
   }
+
+  // 行き先が空欄で URL だけの行 → 航空券リンクとして travels に保存
+  let flightUrls: string[] = [];
+  try {
+    const raw = JSON.parse(String(formData.get("flightUrls") ?? "[]"));
+    if (Array.isArray(raw)) {
+      flightUrls = raw
+        .map((u: unknown) => String(u).trim())
+        .filter((u: string) => /^https?:\/\/.+/.test(u));
+    }
+  } catch {
+    // 不正な JSON は無視
+  }
+
   return {
     title,
     departedOn,
     returnedOn: returnedOn || null,
     memo: memo || null,
+    flightUrls,
   };
 }
 

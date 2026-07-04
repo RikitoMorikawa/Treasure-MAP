@@ -103,6 +103,27 @@ export default async function TravelDetailPage({
         </Link>
       </div>
 
+      {travel.flightUrls.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
+            ✈️ 航空券
+          </h2>
+          <div className="flex flex-wrap gap-2 rounded-2xl border-2 border-sky-200 bg-white p-4 shadow-md">
+            {travel.flightUrls.map((u, i) => (
+              <a
+                key={i}
+                href={u}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full bg-indigo-100 px-3 py-1 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-200"
+              >
+                ✈️ {urlHost(u)}
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
       {routes.length > 0 && (
         <section className="space-y-3">
           <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">

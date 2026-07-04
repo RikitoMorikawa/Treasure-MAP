@@ -13,6 +13,11 @@ export const travels = sqliteTable("travels", {
   departedOn: text("departed_on").notNull(),
   returnedOn: text("returned_on"),
   memo: text("memo"),
+  // 航空券のリンク(行き先を持たない URL のみの行として入力されたもの)
+  flightUrls: text("flight_urls", { mode: "json" })
+    .$type<string[]>()
+    .notNull()
+    .default(sql`'[]'`),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),

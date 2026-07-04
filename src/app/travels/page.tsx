@@ -85,6 +85,7 @@ export default async function TravelsPage() {
     departedOn: t.departedOn,
     returnedOn: t.returnedOn,
     destinationText: destText(t.id),
+    flightUrls: t.flightUrls,
     dests: (destsByTravel.get(t.id) ?? []).map((d) => ({
       country: d.country,
       city: d.city,

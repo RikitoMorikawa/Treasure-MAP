@@ -57,27 +57,35 @@ function Badge({ isNew, filled }: { isNew: boolean; filled: boolean }) {
 export function DestinationsEditor({
   masters,
   initial,
+  initialFlightUrls,
 }: {
   masters: MasterCountry[];
   initial?: DestinationInitial[];
+  initialFlightUrls?: string[];
 }) {
   const uid = useId();
-  const [rows, setRows] = useState<Row[]>(() =>
-    initial && initial.length > 0
-      ? initial.map((d) => {
-          const co = masters.find((m) => m.id === d.countryId);
-          const ci = co?.cities.find((c) => c.id === d.cityId);
-          return {
-            ...EMPTY_ROW,
-            country: co?.name ?? "",
-            city: ci?.name ?? "",
-            arrivedOn: d.arrivedOn ?? "",
-            leftOn: d.leftOn ?? "",
-            urls: d.urls,
-          };
-        })
-      : [{ ...EMPTY_ROW }],
-  );
+  const [rows, setRows] = useState<Row[]>(() => {
+    const destRows =
+      initial && initial.length > 0
+        ? initial.map((d) => {
+            const co = masters.find((m) => m.id === d.countryId);
+            const ci = co?.cities.find((c) => c.id === d.cityId);
+            return {
+              ...EMPTY_ROW,
+              country: co?.name ?? "",
+              city: ci?.name ?? "",
+              arrivedOn: d.arrivedOn ?? "",
+              leftOn: d.leftOn ?? "",
+              urls: d.urls,
+            };
+          })
+        : [{ ...EMPTY_ROW }];
+    // 保存済みの航空券リンクは「行き先空欄+URL のみ」の行として復元
+    if (initialFlightUrls && initialFlightUrls.length > 0) {
+      destRows.push({ ...EMPTY_ROW, urls: initialFlightUrls });
+    }
+    return destRows;
+  });
 
   const update = (i: number, patch: Partial<Row>) =>
     setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
@@ -117,6 +125,13 @@ export function DestinationsEditor({
         };
       })
       .filter((d) => d.countryId != null || d.countryName),
+  );
+
+  // 行き先が空欄で URL だけ入っている行は航空券リンクとして扱う
+  const flightUrls = JSON.stringify(
+    rows
+      .filter((r) => r.country.trim() === "" && r.city.trim() === "")
+      .flatMap((r) => r.urls.map((u) => u.trim()).filter(Boolean)),
   );
 
   const inputCls =
@@ -212,6 +227,13 @@ export function DestinationsEditor({
                 />
                 <Badge isNew={!ci} filled={r.city.trim() !== ""} />
               </div>
+              {r.country.trim() === "" &&
+                r.city.trim() === "" &&
+                r.urls.some((u) => u.trim() !== "") && (
+                  <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-600">
+                    ✈️ 航空券リンクとして保存
+                  </span>
+                )}
               {rows.length > 1 && (
                 <span className="ml-auto flex items-center gap-0.5">
                   <button
@@ -334,6 +356,7 @@ export function DestinationsEditor({
         ＋ 行き先を追加
       </button>
       <input type="hidden" name="destinations" value={serialized} />
+      <input type="hidden" name="flightUrls" value={flightUrls} />
     </div>
   );
 }

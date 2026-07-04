@@ -61,7 +61,11 @@ export function TravelForm({
           />
         </label>
       </div>
-      <DestinationsEditor masters={masters} initial={destinations} />
+      <DestinationsEditor
+        masters={masters}
+        initial={destinations}
+        initialFlightUrls={travel?.flightUrls}
+      />
       <label className="block text-sm">
         <span className="mb-1 block font-semibold text-slate-600">メモ</span>
         <textarea

@@ -25,6 +25,7 @@ type CalendarTravel = {
   departedOn: string;
   returnedOn: string | null;
   destinationText: string;
+  flightUrls: string[];
   dests: CalendarDest[];
 };
 
@@ -53,7 +54,8 @@ type DayEvent = { text: string; urls: string[] };
 // 到着・滞在イベントには行き先のホテルリンク等を添える
 function dayEvents(t: CalendarTravel, date: string): DayEvent[] {
   const events: DayEvent[] = [];
-  if (t.departedOn === date) events.push({ text: "✈️ 出発日", urls: [] });
+  if (t.departedOn === date)
+    events.push({ text: "✈️ 出発日", urls: t.flightUrls });
   t.dests.forEach((s, i) => {
     const name = destName(s);
     if (s.arrivedOn === date) {
@@ -80,7 +82,8 @@ function dayEvents(t: CalendarTravel, date: string): DayEvent[] {
       });
     }
   });
-  if (t.returnedOn === date) events.push({ text: "🏠 帰国日", urls: [] });
+  if (t.returnedOn === date)
+    events.push({ text: "🏠 帰国日", urls: t.flightUrls });
   return events;
 }
 
