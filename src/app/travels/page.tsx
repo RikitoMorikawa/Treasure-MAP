@@ -272,6 +272,12 @@ export default async function TravelsPage() {
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   <Link
+                    href={`/travels/${t.id}`}
+                    className="rounded-full bg-sky-500 px-2.5 py-1 text-xs font-bold text-white transition hover:bg-sky-600"
+                  >
+                    詳細
+                  </Link>
+                  <Link
                     href={`/travels/${t.id}/edit`}
                     className="rounded-full px-2 py-1 text-xs font-semibold text-sky-500 transition hover:bg-sky-50"
                   >

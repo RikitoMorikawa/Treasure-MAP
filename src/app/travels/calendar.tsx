@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 type CalendarDest = {
   country: string;
@@ -309,13 +310,23 @@ export function TravelCalendar({
       {yearTravels.length > 0 && (
         <ul className="mt-4 space-y-1 border-t border-sky-100 pt-3">
           {yearTravels.map((t) => (
-            <li key={t.id} className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-gradient-to-br from-sky-400 to-blue-500" />
-              <span className="font-bold text-slate-700">✈️ {t.title}</span>
-              <span className="font-semibold text-sky-600">
-                {t.departedOn}
-                {travelEnd(t) !== t.departedOn ? ` 〜 ${travelEnd(t)}` : ""}
-              </span>
+            <li key={t.id} className="text-xs">
+              <Link
+                href={`/travels/${t.id}`}
+                className="group flex flex-wrap items-center gap-2 rounded-lg px-1.5 py-1 transition hover:bg-sky-50"
+              >
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-gradient-to-br from-sky-400 to-blue-500" />
+                <span className="font-bold text-slate-700 group-hover:text-sky-700">
+                  ✈️ {t.title}
+                </span>
+                <span className="font-semibold text-sky-600">
+                  {t.departedOn}
+                  {travelEnd(t) !== t.departedOn ? ` 〜 ${travelEnd(t)}` : ""}
+                </span>
+                <span className="text-sky-400 opacity-0 transition group-hover:opacity-100">
+                  →
+                </span>
+              </Link>
             </li>
           ))}
         </ul>
