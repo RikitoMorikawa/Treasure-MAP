@@ -63,11 +63,9 @@ export default async function TravelDetailPage({
   const hotelRows = await db.select().from(hotels);
   const hotelUrls = (destId: number) =>
     hotelRows.filter((h) => h.destinationId === destId).map((h) => h.url);
-  const flightRows = await db
-    .select()
-    .from(flights)
-    .where(eq(flights.travelId, numId));
-  const flightUrls = flightRows.map((f) => f.url);
+  const flightRows = (
+    await db.select().from(flights).where(eq(flights.travelId, numId))
+  ).sort((a, b) => (a.flownOn ?? "").localeCompare(b.flownOn ?? ""));
 
   const stops = dests
     .map((d) => ({
@@ -118,21 +116,22 @@ export default async function TravelDetailPage({
         </Link>
       </div>
 
-      {flightUrls.length > 0 && (
+      {flightRows.length > 0 && (
         <section className="space-y-3">
           <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
             ✈️ 航空券
           </h2>
           <div className="flex flex-wrap gap-2 rounded-2xl border-2 border-sky-200 bg-white p-4 shadow-md">
-            {flightUrls.map((u, i) => (
+            {flightRows.map((f) => (
               <a
-                key={i}
-                href={u}
+                key={f.id}
+                href={f.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rounded-full bg-indigo-100 px-3 py-1 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-200"
               >
-                ✈️ {urlHost(u)}
+                ✈️ {f.flownOn ? `${fmt(f.flownOn)} ` : ""}
+                {urlHost(f.url)}
               </a>
             ))}
           </div>

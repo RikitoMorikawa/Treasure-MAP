@@ -31,14 +31,19 @@ function travelValues(formData: FormData) {
   };
 }
 
-// hidden input "flightUrls" の JSON(航空券リンクの配列)
-function parseFlightUrls(formData: FormData): string[] {
+// hidden input "flights" の JSON: [{ url, flownOn }](搭乗日は任意)
+function parseFlights(formData: FormData): { url: string; flownOn: string | null }[] {
   try {
-    const raw = JSON.parse(String(formData.get("flightUrls") ?? "[]"));
+    const raw = JSON.parse(String(formData.get("flights") ?? "[]"));
     if (!Array.isArray(raw)) return [];
     return raw
-      .map((u: unknown) => String(u).trim())
-      .filter((u: string) => /^https?:\/\/.+/.test(u));
+      .map((f) => ({
+        url: String(f?.url ?? "").trim(),
+        flownOn: /^\d{4}-\d{2}-\d{2}$/.test(String(f?.flownOn ?? "").trim())
+          ? String(f.flownOn).trim()
+          : null,
+      }))
+      .filter((f) => /^https?:\/\/.+/.test(f.url));
   } catch {
     return [];
   }
@@ -335,11 +340,11 @@ export async function addTravel(formData: FormData) {
     .values(values)
     .returning({ id: travels.id });
   await insertDestinations(row.id, resolved);
-  const flightUrls = parseFlightUrls(formData);
-  if (flightUrls.length > 0) {
+  const flightRows = parseFlights(formData);
+  if (flightRows.length > 0) {
     await db
       .insert(flights)
-      .values(flightUrls.map((url) => ({ travelId: row.id, url })));
+      .values(flightRows.map((f) => ({ travelId: row.id, ...f })));
   }
   revalidatePath("/travels");
   redirect("/travels");
@@ -355,11 +360,11 @@ export async function updateTravel(formData: FormData) {
   await db.update(travels).set(values).where(eq(travels.id, id));
   await deleteTravelChildren(id);
   await insertDestinations(id, resolved);
-  const flightUrls = parseFlightUrls(formData);
-  if (flightUrls.length > 0) {
+  const flightRows = parseFlights(formData);
+  if (flightRows.length > 0) {
     await db
       .insert(flights)
-      .values(flightUrls.map((url) => ({ travelId: id, url })));
+      .values(flightRows.map((f) => ({ travelId: id, ...f })));
   }
   revalidatePath("/travels");
   redirect("/travels");

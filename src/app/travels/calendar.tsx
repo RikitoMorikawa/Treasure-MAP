@@ -19,13 +19,15 @@ function urlHost(u: string) {
   }
 }
 
+type CalendarFlight = { url: string; flownOn: string | null };
+
 type CalendarTravel = {
   id: number;
   title: string;
   departedOn: string;
   returnedOn: string | null;
   destinationText: string;
-  flightUrls: string[];
+  flights: CalendarFlight[];
   dests: CalendarDest[];
 };
 
@@ -54,8 +56,19 @@ type DayEvent = { text: string; urls: string[] };
 // 到着・滞在イベントには行き先のホテルリンク等を添える
 function dayEvents(t: CalendarTravel, date: string): DayEvent[] {
   const events: DayEvent[] = [];
+  // 搭乗日なしの航空券は出発日・帰国日に添える。搭乗日ありはその日に表示
+  const undatedFlights = t.flights
+    .filter((f) => !f.flownOn)
+    .map((f) => f.url);
   if (t.departedOn === date)
-    events.push({ text: "✈️ 出発日", urls: t.flightUrls });
+    events.push({ text: "✈️ 出発日", urls: undatedFlights });
+  for (const f of t.flights) {
+    if (f.flownOn === date && f.flownOn !== t.departedOn) {
+      events.push({ text: "✈️ フライト(移動日)", urls: [f.url] });
+    } else if (f.flownOn === date && f.flownOn === t.departedOn) {
+      events.push({ text: "✈️ フライト", urls: [f.url] });
+    }
+  }
   t.dests.forEach((s, i) => {
     const name = destName(s);
     if (s.arrivedOn === date) {
@@ -83,7 +96,7 @@ function dayEvents(t: CalendarTravel, date: string): DayEvent[] {
     }
   });
   if (t.returnedOn === date)
-    events.push({ text: "🏠 帰国日", urls: t.flightUrls });
+    events.push({ text: "🏠 帰国日", urls: undatedFlights });
   return events;
 }
 

@@ -55,10 +55,13 @@ export default async function TravelsPage() {
     hotelsByDest.set(h.destinationId, list);
   }
   const flightRows = await db.select().from(flights);
-  const flightsByTravel = new Map<number, string[]>();
+  const flightsByTravel = new Map<
+    number,
+    { url: string; flownOn: string | null }[]
+  >();
   for (const f of flightRows) {
     const list = flightsByTravel.get(f.travelId) ?? [];
-    list.push(f.url);
+    list.push({ url: f.url, flownOn: f.flownOn });
     flightsByTravel.set(f.travelId, list);
   }
 
@@ -107,7 +110,7 @@ export default async function TravelsPage() {
     departedOn: t.departedOn,
     returnedOn: t.returnedOn,
     destinationText: destText(t.id),
-    flightUrls: flightsByTravel.get(t.id) ?? [],
+    flights: flightsByTravel.get(t.id) ?? [],
     dests: (destsByTravel.get(t.id) ?? []).map((d) => ({
       country: d.country,
       city: d.city,

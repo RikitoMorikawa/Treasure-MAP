@@ -18,13 +18,14 @@ export const travels = sqliteTable("travels", {
     .default(sql`(datetime('now'))`),
 });
 
-// 航空券のリンク(旅行に紐づく)
+// 航空券のリンク(旅行に紐づく)。flown_on は搭乗日(移動日)
 export const flights = sqliteTable("flights", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   travelId: integer("travel_id")
     .notNull()
     .references(() => travels.id, { onDelete: "cascade" }),
   url: text("url").notNull(),
+  flownOn: text("flown_on"),
 });
 
 // 国マスター。座標は国の代表点(都市未指定の行き先のピンに使う)
