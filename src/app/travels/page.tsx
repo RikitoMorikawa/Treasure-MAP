@@ -48,10 +48,15 @@ export default async function TravelsPage() {
 
   // ホテル・航空券リンク
   const hotelRows = await db.select().from(hotels);
-  const hotelsByDest = new Map<number, string[]>();
+  type HotelInfo = {
+    url: string;
+    checkinOn: string | null;
+    checkoutOn: string | null;
+  };
+  const hotelsByDest = new Map<number, HotelInfo[]>();
   for (const h of hotelRows) {
     const list = hotelsByDest.get(h.destinationId) ?? [];
-    list.push(h.url);
+    list.push({ url: h.url, checkinOn: h.checkinOn, checkoutOn: h.checkoutOn });
     hotelsByDest.set(h.destinationId, list);
   }
   const flightRows = await db.select().from(flights);
@@ -116,7 +121,7 @@ export default async function TravelsPage() {
       city: d.city,
       arrivedOn: d.arrivedOn,
       leftOn: d.leftOn,
-      urls: hotelsByDest.get(d.id) ?? [],
+      hotels: hotelsByDest.get(d.id) ?? [],
     })),
   }));
 
@@ -132,7 +137,7 @@ export default async function TravelsPage() {
           lng: d.cityLng ?? d.countryLng,
           arrivedOn: d.arrivedOn,
           leftOn: d.leftOn,
-          urls: hotelsByDest.get(d.id) ?? [],
+          urls: (hotelsByDest.get(d.id) ?? []).map((h) => h.url),
         }))
         .filter((d) => d.lat != null && d.lng != null) as {
         id: number;

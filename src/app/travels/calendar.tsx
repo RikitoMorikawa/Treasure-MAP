@@ -3,13 +3,31 @@
 import { useState } from "react";
 import Link from "next/link";
 
+export type CalendarHotel = {
+  url: string;
+  checkinOn: string | null;
+  checkoutOn: string | null;
+};
+
 export type CalendarDest = {
   country: string;
   city: string | null;
   arrivedOn: string | null;
   leftOn: string | null;
-  urls: string[];
+  hotels: CalendarHotel[];
 };
+
+// その日に該当するホテルのリンク。宿泊期間があれば期間中のみ、
+// 期間未設定のホテルは滞在中ずっと表示する
+export function hotelUrlsOn(d: CalendarDest, date: string) {
+  return d.hotels
+    .filter((h) =>
+      h.checkinOn && h.checkoutOn
+        ? h.checkinOn <= date && date <= h.checkoutOn
+        : true,
+    )
+    .map((h) => h.url);
+}
 
 export function urlHost(u: string) {
   try {
@@ -94,7 +112,7 @@ export function dayEvents(t: CalendarTravel, date: string): DayEvent[] {
         text: prev
           ? `🚝 ${prev} → ${name} へ移動・到着`
           : `🛬 ${name} に到着`,
-        urls: s.urls,
+        urls: hotelUrlsOn(s, date),
       });
     }
     if (s.leftOn === date && s.arrivedOn !== date) {
@@ -108,7 +126,7 @@ export function dayEvents(t: CalendarTravel, date: string): DayEvent[] {
     if (s.arrivedOn && s.leftOn && s.arrivedOn < date && date < s.leftOn) {
       events.push({
         text: `🏨 ${name} に滞在(${fmt(s.arrivedOn)}〜${fmt(s.leftOn)})`,
-        urls: s.urls,
+        urls: hotelUrlsOn(s, date),
       });
     }
   });

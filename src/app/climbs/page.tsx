@@ -5,6 +5,7 @@ import { climbs } from "@/db/schema";
 import { deleteClimb } from "@/app/actions";
 import { ClimbMap } from "./client-widgets";
 import { weatherEmoji } from "./constants";
+import { MemoToggle } from "./memo-toggle";
 
 export const dynamic = "force-dynamic";
 
@@ -128,11 +129,7 @@ export default async function ClimbsPage() {
                     <p className="mt-1 text-xs font-semibold text-slate-500">
                       🗓 {c.climbedOn}
                     </p>
-                    {c.memo && (
-                      <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
-                        {c.memo}
-                      </p>
-                    )}
+                    {c.memo && <MemoToggle memo={c.memo} />}
                   </div>
                   <div className="flex shrink-0 items-center gap-1 self-end sm:self-auto">
                     <Link

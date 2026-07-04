@@ -11,13 +11,21 @@ export type MasterCountry = {
   cities: { id: number; name: string }[];
 };
 
+export type HotelInput = {
+  url: string;
+  checkinOn: string | null;
+  checkoutOn: string | null;
+};
+
 export type DestinationInitial = {
   countryId: number;
   cityId: number | null;
   arrivedOn: string | null;
   leftOn: string | null;
-  urls: string[];
+  hotels: HotelInput[];
 };
+
+type HotelRow = { url: string; checkinOn: string; checkoutOn: string };
 
 type Row = {
   country: string;
@@ -27,7 +35,7 @@ type Row = {
   showMap: boolean;
   arrivedOn: string;
   leftOn: string;
-  urls: string[];
+  hotels: HotelRow[];
 };
 
 const EMPTY_ROW: Row = {
@@ -38,7 +46,7 @@ const EMPTY_ROW: Row = {
   showMap: false,
   arrivedOn: "",
   leftOn: "",
-  urls: [],
+  hotels: [],
 };
 
 function Badge({ isNew, filled }: { isNew: boolean; filled: boolean }) {
@@ -73,7 +81,11 @@ export function DestinationsEditor({
             city: ci?.name ?? "",
             arrivedOn: d.arrivedOn ?? "",
             leftOn: d.leftOn ?? "",
-            urls: d.urls,
+            hotels: d.hotels.map((h) => ({
+              url: h.url,
+              checkinOn: h.checkinOn ?? "",
+              checkoutOn: h.checkoutOn ?? "",
+            })),
           };
         })
       : [{ ...EMPTY_ROW }],
@@ -113,7 +125,13 @@ export function DestinationsEditor({
           lng: isNewCity ? r.lng : null,
           arrivedOn: r.arrivedOn || null,
           leftOn: r.leftOn || null,
-          urls: r.urls.map((u) => u.trim()).filter(Boolean),
+          hotels: r.hotels
+            .map((h) => ({
+              url: h.url.trim(),
+              checkinOn: h.checkinOn || null,
+              checkoutOn: h.checkoutOn || null,
+            }))
+            .filter((h) => h.url),
         };
       })
       .filter((d) => d.countryId != null || d.countryName),
@@ -273,44 +291,78 @@ export function DestinationsEditor({
               )}
               <button
                 type="button"
-                onClick={() => update(i, { urls: [...r.urls, ""] })}
+                onClick={() =>
+                  update(i, {
+                    hotels: [
+                      ...r.hotels,
+                      { url: "", checkinOn: "", checkoutOn: "" },
+                    ],
+                  })
+                }
                 className="rounded-full border border-sky-300 px-2.5 py-1 text-xs font-bold text-sky-600 transition hover:bg-sky-50"
               >
-                🔗 URL を追加
+                🏨 ホテルを追加
               </button>
             </div>
-            {r.urls.length > 0 && (
-              <div className="space-y-1 pl-8">
-                {r.urls.map((u, ui) => (
-                  <div key={ui} className="flex items-center gap-1">
-                    <span className="text-xs">🏨</span>
-                    <input
-                      type="url"
-                      value={u}
-                      onChange={(e) =>
-                        update(i, {
-                          urls: r.urls.map((x, xi) =>
-                            xi === ui ? e.target.value : x,
-                          ),
-                        })
-                      }
-                      placeholder="https://(宿泊ホテルのリンクなど)"
-                      className={`flex-1 ${inputCls}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        update(i, {
-                          urls: r.urls.filter((_, xi) => xi !== ui),
-                        })
-                      }
-                      className="rounded-full px-2 py-1 text-xs font-bold text-slate-400 transition hover:bg-rose-50 hover:text-rose-500"
-                      title="この URL を削除"
+            {r.hotels.length > 0 && (
+              <div className="space-y-1.5 pl-8">
+                {r.hotels.map((h, hi) => {
+                  const patchHotel = (patch: Partial<HotelRow>) =>
+                    update(i, {
+                      hotels: r.hotels.map((x, xi) =>
+                        xi === hi ? { ...x, ...patch } : x,
+                      ),
+                    });
+                  return (
+                    <div
+                      key={hi}
+                      className="flex flex-wrap items-center gap-1.5 rounded-lg border border-sky-100 bg-white/70 p-1.5"
                     >
-                      ✕
-                    </button>
-                  </div>
-                ))}
+                      <span className="text-xs">🏨</span>
+                      <input
+                        type="url"
+                        value={h.url}
+                        onChange={(e) => patchHotel({ url: e.target.value })}
+                        placeholder="https://(宿泊ホテルのリンク)"
+                        className={`min-w-40 flex-1 ${inputCls}`}
+                      />
+                      <label className="flex items-center gap-1 text-xs text-slate-500">
+                        IN
+                        <input
+                          type="date"
+                          value={h.checkinOn}
+                          onChange={(e) =>
+                            patchHotel({ checkinOn: e.target.value })
+                          }
+                          className={inputCls}
+                        />
+                      </label>
+                      <label className="flex items-center gap-1 text-xs text-slate-500">
+                        OUT
+                        <input
+                          type="date"
+                          value={h.checkoutOn}
+                          onChange={(e) =>
+                            patchHotel({ checkoutOn: e.target.value })
+                          }
+                          className={inputCls}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          update(i, {
+                            hotels: r.hotels.filter((_, xi) => xi !== hi),
+                          })
+                        }
+                        className="rounded-full px-2 py-1 text-xs font-bold text-slate-400 transition hover:bg-rose-50 hover:text-rose-500"
+                        title="このホテルを削除"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             )}
             {r.showMap && isNewCity && (

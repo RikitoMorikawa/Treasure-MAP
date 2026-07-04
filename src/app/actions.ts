@@ -72,11 +72,11 @@ async function insertDestinations(
   const inserted = await db
     .insert(travelDestinations)
     .values(
-      resolved.map(({ urls: _urls, ...d }) => ({ ...d, travelId })),
+      resolved.map(({ hotels: _hotels, ...d }) => ({ ...d, travelId })),
     )
     .returning({ id: travelDestinations.id });
   const hotelRows = resolved.flatMap((d, i) =>
-    d.urls.map((url) => ({ destinationId: inserted[i].id, url })),
+    d.hotels.map((h) => ({ destinationId: inserted[i].id, ...h })),
   );
   if (hotelRows.length > 0) await db.insert(hotels).values(hotelRows);
 }
@@ -123,10 +123,22 @@ function parseDestinations(formData: FormData) {
         lng: d?.lng != null ? num(d.lng) : null,
         arrivedOn: date(d?.arrivedOn),
         leftOn: date(d?.leftOn),
-        urls: Array.isArray(d?.urls)
-          ? d.urls
-              .map((u: unknown) => String(u).trim())
-              .filter((u: string) => /^https?:\/\/.+/.test(u))
+        hotels: Array.isArray(d?.hotels)
+          ? d.hotels
+              .map((h: unknown) => {
+                const hotel = h as Record<string, unknown>;
+                let checkinOn = date(hotel?.checkinOn);
+                let checkoutOn = date(hotel?.checkoutOn);
+                if (checkinOn && checkoutOn && checkoutOn < checkinOn) {
+                  [checkinOn, checkoutOn] = [checkoutOn, checkinOn];
+                }
+                return {
+                  url: String(hotel?.url ?? "").trim(),
+                  checkinOn,
+                  checkoutOn,
+                };
+              })
+              .filter((h: { url: string }) => /^https?:\/\/.+/.test(h.url))
           : [],
       }))
       .filter((d) => d.countryId != null || d.countryName);
@@ -145,7 +157,7 @@ async function resolveDestinations(
     sortOrder: number;
     arrivedOn: string | null;
     leftOn: string | null;
-    urls: string[];
+    hotels: { url: string; checkinOn: string | null; checkoutOn: string | null }[];
   }[] = [];
 
   for (const d of dests) {
@@ -215,7 +227,7 @@ async function resolveDestinations(
       sortOrder: out.length, // フォームの表示順をそのまま保存
       arrivedOn: d.arrivedOn,
       leftOn: d.leftOn,
-      urls: d.urls,
+      hotels: d.hotels,
     });
   }
   return out;

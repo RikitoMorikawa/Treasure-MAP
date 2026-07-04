@@ -62,8 +62,9 @@ export default async function TravelDetailPage({
     .orderBy(asc(travelDestinations.sortOrder), asc(travelDestinations.id));
 
   const hotelRows = await db.select().from(hotels);
-  const hotelUrls = (destId: number) =>
-    hotelRows.filter((h) => h.destinationId === destId).map((h) => h.url);
+  const hotelsFor = (destId: number) =>
+    hotelRows.filter((h) => h.destinationId === destId);
+  const hotelUrls = (destId: number) => hotelsFor(destId).map((h) => h.url);
   const flightRows = await db
     .select()
     .from(flights)
@@ -177,7 +178,11 @@ export default async function TravelDetailPage({
               city: d.city,
               arrivedOn: d.arrivedOn,
               leftOn: d.leftOn,
-              urls: hotelUrls(d.id),
+              hotels: hotelsFor(d.id).map((h) => ({
+                url: h.url,
+                checkinOn: h.checkinOn,
+                checkoutOn: h.checkoutOn,
+              })),
             })),
           }}
         />
@@ -241,17 +246,20 @@ export default async function TravelDetailPage({
                       → 🛫 {item.dest.leftOn ? fmt(item.dest.leftOn) : "?"}
                     </p>
                   )}
-                  {hotelUrls(item.dest.id).length > 0 && (
+                  {hotelsFor(item.dest.id).length > 0 && (
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {hotelUrls(item.dest.id).map((u, ui) => (
+                      {hotelsFor(item.dest.id).map((h) => (
                         <a
-                          key={ui}
-                          href={u}
+                          key={h.id}
+                          href={h.url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-200"
                         >
-                          🔗 {urlHost(u)}
+                          🏨 {h.checkinOn && h.checkoutOn
+                            ? `${fmt(h.checkinOn)}〜${fmt(h.checkoutOn)} `
+                            : ""}
+                          {urlHost(h.url)}
                         </a>
                       ))}
                     </div>

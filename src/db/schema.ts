@@ -69,13 +69,15 @@ export const travelDestinations = sqliteTable("travel_destinations", {
   leftOn: text("left_on"),
 });
 
-// 宿泊ホテルなどのリンク(行き先に紐づく)
+// 宿泊ホテルなどのリンク(行き先に紐づく)。宿泊期間付き
 export const hotels = sqliteTable("hotels", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   destinationId: integer("destination_id")
     .notNull()
     .references(() => travelDestinations.id, { onDelete: "cascade" }),
   url: text("url").notNull(),
+  checkinOn: text("checkin_on"),
+  checkoutOn: text("checkout_on"),
 });
 
 export const climbs = sqliteTable("climbs", {

@@ -55,9 +55,13 @@ export default async function EditTravelPage({
           cityId: d.cityId,
           arrivedOn: d.arrivedOn,
           leftOn: d.leftOn,
-          urls: hotelRows
+          hotels: hotelRows
             .filter((h) => h.destinationId === d.id)
-            .map((h) => h.url),
+            .map((h) => ({
+              url: h.url,
+              checkinOn: h.checkinOn,
+              checkoutOn: h.checkoutOn,
+            })),
         }))}
         flightList={flightRows.map((f) => ({
           url: f.url,
