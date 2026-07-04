@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { travelDestinations, travels } from "@/db/schema";
+import { flights, hotels, travelDestinations, travels } from "@/db/schema";
 import { updateTravel } from "@/app/actions";
 import { TravelForm } from "../../travel-form";
 import { getMasters } from "../../masters";
@@ -32,6 +32,12 @@ export default async function EditTravelPage({
 
   const masters = await getMasters();
 
+  const hotelRows = await db.select().from(hotels);
+  const flightRows = await db
+    .select()
+    .from(flights)
+    .where(eq(flights.travelId, numId));
+
   return (
     <div className="space-y-6">
       <div className="rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 px-6 py-5 text-white shadow-lg shadow-sky-200">
@@ -49,8 +55,11 @@ export default async function EditTravelPage({
           cityId: d.cityId,
           arrivedOn: d.arrivedOn,
           leftOn: d.leftOn,
-          urls: d.urls,
+          urls: hotelRows
+            .filter((h) => h.destinationId === d.id)
+            .map((h) => h.url),
         }))}
+        flightUrls={flightRows.map((f) => f.url)}
         submitLabel="更新する"
       />
       <Link

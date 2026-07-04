@@ -4,18 +4,21 @@ import {
   type DestinationInitial,
   type MasterCountry,
 } from "./destinations-editor";
+import { FlightUrlsEditor } from "./flight-urls-editor";
 
 export function TravelForm({
   action,
   travel,
   masters,
   destinations,
+  flightUrls,
   submitLabel,
 }: {
   action: (formData: FormData) => Promise<void>;
   travel?: Travel;
   masters: MasterCountry[];
   destinations?: DestinationInitial[];
+  flightUrls?: string[];
   submitLabel: string;
 }) {
   return (
@@ -61,11 +64,8 @@ export function TravelForm({
           />
         </label>
       </div>
-      <DestinationsEditor
-        masters={masters}
-        initial={destinations}
-        initialFlightUrls={travel?.flightUrls}
-      />
+      <DestinationsEditor masters={masters} initial={destinations} />
+      <FlightUrlsEditor initial={flightUrls} />
       <label className="block text-sm">
         <span className="mb-1 block font-semibold text-slate-600">メモ</span>
         <textarea

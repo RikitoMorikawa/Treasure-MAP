@@ -2,7 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { cities, countries, travelDestinations, travels } from "@/db/schema";
+import {
+  cities,
+  countries,
+  flights,
+  hotels,
+  travelDestinations,
+  travels,
+} from "@/db/schema";
 import { TravelRouteMap } from "../client-widgets";
 
 export const dynamic = "force-dynamic";
@@ -40,7 +47,6 @@ export default async function TravelDetailPage({
       id: travelDestinations.id,
       arrivedOn: travelDestinations.arrivedOn,
       leftOn: travelDestinations.leftOn,
-      urls: travelDestinations.urls,
       country: countries.name,
       city: cities.name,
       cityLat: cities.latitude,
@@ -54,6 +60,15 @@ export default async function TravelDetailPage({
     .where(eq(travelDestinations.travelId, numId))
     .orderBy(asc(travelDestinations.sortOrder), asc(travelDestinations.id));
 
+  const hotelRows = await db.select().from(hotels);
+  const hotelUrls = (destId: number) =>
+    hotelRows.filter((h) => h.destinationId === destId).map((h) => h.url);
+  const flightRows = await db
+    .select()
+    .from(flights)
+    .where(eq(flights.travelId, numId));
+  const flightUrls = flightRows.map((f) => f.url);
+
   const stops = dests
     .map((d) => ({
       id: d.id,
@@ -63,7 +78,7 @@ export default async function TravelDetailPage({
       lng: d.cityLng ?? d.countryLng,
       arrivedOn: d.arrivedOn,
       leftOn: d.leftOn,
-      urls: d.urls,
+      urls: hotelUrls(d.id),
     }))
     .filter((d) => d.lat != null && d.lng != null) as {
     id: number;
@@ -103,13 +118,13 @@ export default async function TravelDetailPage({
         </Link>
       </div>
 
-      {travel.flightUrls.length > 0 && (
+      {flightUrls.length > 0 && (
         <section className="space-y-3">
           <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
             ✈️ 航空券
           </h2>
           <div className="flex flex-wrap gap-2 rounded-2xl border-2 border-sky-200 bg-white p-4 shadow-md">
-            {travel.flightUrls.map((u, i) => (
+            {flightUrls.map((u, i) => (
               <a
                 key={i}
                 href={u}
@@ -163,9 +178,9 @@ export default async function TravelDetailPage({
                     {d.leftOn ? fmt(d.leftOn) : "?"}
                   </p>
                 )}
-                {d.urls.length > 0 && (
+                {hotelUrls(d.id).length > 0 && (
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {d.urls.map((u, ui) => (
+                    {hotelUrls(d.id).map((u, ui) => (
                       <a
                         key={ui}
                         href={u}

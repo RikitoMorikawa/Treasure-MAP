@@ -13,14 +13,18 @@ export const travels = sqliteTable("travels", {
   departedOn: text("departed_on").notNull(),
   returnedOn: text("returned_on"),
   memo: text("memo"),
-  // 航空券のリンク(行き先を持たない URL のみの行として入力されたもの)
-  flightUrls: text("flight_urls", { mode: "json" })
-    .$type<string[]>()
-    .notNull()
-    .default(sql`'[]'`),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),
+});
+
+// 航空券のリンク(旅行に紐づく)
+export const flights = sqliteTable("flights", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  travelId: integer("travel_id")
+    .notNull()
+    .references(() => travels.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
 });
 
 // 国マスター。座標は国の代表点(都市未指定の行き先のピンに使う)
@@ -59,11 +63,15 @@ export const travelDestinations = sqliteTable("travel_destinations", {
   sortOrder: integer("sort_order").notNull().default(0),
   arrivedOn: text("arrived_on"),
   leftOn: text("left_on"),
-  // 宿泊ホテルなどの参考リンク(複数可)
-  urls: text("urls", { mode: "json" })
-    .$type<string[]>()
+});
+
+// 宿泊ホテルなどのリンク(行き先に紐づく)
+export const hotels = sqliteTable("hotels", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  destinationId: integer("destination_id")
     .notNull()
-    .default(sql`'[]'`),
+    .references(() => travelDestinations.id, { onDelete: "cascade" }),
+  url: text("url").notNull(),
 });
 
 export const climbs = sqliteTable("climbs", {
@@ -86,4 +94,6 @@ export type Travel = typeof travels.$inferSelect;
 export type TravelDestination = typeof travelDestinations.$inferSelect;
 export type Country = typeof countries.$inferSelect;
 export type City = typeof cities.$inferSelect;
+export type Flight = typeof flights.$inferSelect;
+export type Hotel = typeof hotels.$inferSelect;
 export type Climb = typeof climbs.$inferSelect;

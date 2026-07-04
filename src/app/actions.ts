@@ -8,6 +8,8 @@ import {
   cities,
   climbs,
   countries,
+  flights,
+  hotels,
   travelDestinations,
   travels,
 } from "@/db/schema";
@@ -21,27 +23,58 @@ function travelValues(formData: FormData) {
   if (returnedOn && returnedOn < departedOn) {
     [departedOn, returnedOn] = [returnedOn, departedOn];
   }
-
-  // 行き先が空欄で URL だけの行 → 航空券リンクとして travels に保存
-  let flightUrls: string[] = [];
-  try {
-    const raw = JSON.parse(String(formData.get("flightUrls") ?? "[]"));
-    if (Array.isArray(raw)) {
-      flightUrls = raw
-        .map((u: unknown) => String(u).trim())
-        .filter((u: string) => /^https?:\/\/.+/.test(u));
-    }
-  } catch {
-    // 不正な JSON は無視
-  }
-
   return {
     title,
     departedOn,
     returnedOn: returnedOn || null,
     memo: memo || null,
-    flightUrls,
   };
+}
+
+// hidden input "flightUrls" の JSON(航空券リンクの配列)
+function parseFlightUrls(formData: FormData): string[] {
+  try {
+    const raw = JSON.parse(String(formData.get("flightUrls") ?? "[]"));
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map((u: unknown) => String(u).trim())
+      .filter((u: string) => /^https?:\/\/.+/.test(u));
+  } catch {
+    return [];
+  }
+}
+
+// 行き先を保存し、各行のホテル URL を hotels テーブルへ入れる
+async function insertDestinations(
+  travelId: number,
+  resolved: Awaited<ReturnType<typeof resolveDestinations>>,
+) {
+  const inserted = await db
+    .insert(travelDestinations)
+    .values(
+      resolved.map(({ urls: _urls, ...d }) => ({ ...d, travelId })),
+    )
+    .returning({ id: travelDestinations.id });
+  const hotelRows = resolved.flatMap((d, i) =>
+    d.urls.map((url) => ({ destinationId: inserted[i].id, url })),
+  );
+  if (hotelRows.length > 0) await db.insert(hotels).values(hotelRows);
+}
+
+// 旅行に紐づく行き先(+ホテル)と航空券を削除する
+// ※ libsql は外部キーの CASCADE が既定で効かないため明示的に消す
+async function deleteTravelChildren(travelId: number) {
+  const destIds = await db
+    .select({ id: travelDestinations.id })
+    .from(travelDestinations)
+    .where(eq(travelDestinations.travelId, travelId));
+  for (const d of destIds) {
+    await db.delete(hotels).where(eq(hotels.destinationId, d.id));
+  }
+  await db
+    .delete(travelDestinations)
+    .where(eq(travelDestinations.travelId, travelId));
+  await db.delete(flights).where(eq(flights.travelId, travelId));
 }
 
 // hidden input "destinations" の JSON。1行 = 1行き先(国+都市1つ)。
@@ -301,9 +334,13 @@ export async function addTravel(formData: FormData) {
     .insert(travels)
     .values(values)
     .returning({ id: travels.id });
-  await db
-    .insert(travelDestinations)
-    .values(resolved.map((d) => ({ ...d, travelId: row.id })));
+  await insertDestinations(row.id, resolved);
+  const flightUrls = parseFlightUrls(formData);
+  if (flightUrls.length > 0) {
+    await db
+      .insert(flights)
+      .values(flightUrls.map((url) => ({ travelId: row.id, url })));
+  }
   revalidatePath("/travels");
   redirect("/travels");
 }
@@ -316,12 +353,14 @@ export async function updateTravel(formData: FormData) {
   const resolved = await resolveDestinations(dests);
   if (resolved.length === 0) return;
   await db.update(travels).set(values).where(eq(travels.id, id));
-  await db
-    .delete(travelDestinations)
-    .where(eq(travelDestinations.travelId, id));
-  await db
-    .insert(travelDestinations)
-    .values(resolved.map((d) => ({ ...d, travelId: id })));
+  await deleteTravelChildren(id);
+  await insertDestinations(id, resolved);
+  const flightUrls = parseFlightUrls(formData);
+  if (flightUrls.length > 0) {
+    await db
+      .insert(flights)
+      .values(flightUrls.map((url) => ({ travelId: id, url })));
+  }
   revalidatePath("/travels");
   redirect("/travels");
 }
@@ -329,9 +368,7 @@ export async function updateTravel(formData: FormData) {
 export async function deleteTravel(formData: FormData) {
   const id = Number(formData.get("id"));
   if (!Number.isInteger(id)) return;
-  await db
-    .delete(travelDestinations)
-    .where(eq(travelDestinations.travelId, id));
+  await deleteTravelChildren(id);
   await db.delete(travels).where(eq(travels.id, id));
   revalidatePath("/travels");
 }

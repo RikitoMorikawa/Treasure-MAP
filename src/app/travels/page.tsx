@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { asc, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { cities, countries, travelDestinations, travels } from "@/db/schema";
+import {
+  cities,
+  countries,
+  flights,
+  hotels,
+  travelDestinations,
+  travels,
+} from "@/db/schema";
 import { deleteTravel } from "@/app/actions";
 import { TravelCalendar } from "./calendar";
 import { TravelsOverview } from "./overview";
@@ -27,7 +34,6 @@ export default async function TravelsPage() {
       travelId: travelDestinations.travelId,
       arrivedOn: travelDestinations.arrivedOn,
       leftOn: travelDestinations.leftOn,
-      urls: travelDestinations.urls,
       country: countries.name,
       city: cities.name,
       cityLat: cities.latitude,
@@ -39,6 +45,22 @@ export default async function TravelsPage() {
     .innerJoin(countries, eq(travelDestinations.countryId, countries.id))
     .leftJoin(cities, eq(travelDestinations.cityId, cities.id))
     .orderBy(asc(travelDestinations.sortOrder), asc(travelDestinations.id));
+
+  // ホテル・航空券リンク
+  const hotelRows = await db.select().from(hotels);
+  const hotelsByDest = new Map<number, string[]>();
+  for (const h of hotelRows) {
+    const list = hotelsByDest.get(h.destinationId) ?? [];
+    list.push(h.url);
+    hotelsByDest.set(h.destinationId, list);
+  }
+  const flightRows = await db.select().from(flights);
+  const flightsByTravel = new Map<number, string[]>();
+  for (const f of flightRows) {
+    const list = flightsByTravel.get(f.travelId) ?? [];
+    list.push(f.url);
+    flightsByTravel.set(f.travelId, list);
+  }
 
   const destsByTravel = new Map<number, typeof destRows>();
   for (const d of destRows) {
@@ -85,13 +107,13 @@ export default async function TravelsPage() {
     departedOn: t.departedOn,
     returnedOn: t.returnedOn,
     destinationText: destText(t.id),
-    flightUrls: t.flightUrls,
+    flightUrls: flightsByTravel.get(t.id) ?? [],
     dests: (destsByTravel.get(t.id) ?? []).map((d) => ({
       country: d.country,
       city: d.city,
       arrivedOn: d.arrivedOn,
       leftOn: d.leftOn,
-      urls: d.urls,
+      urls: hotelsByDest.get(d.id) ?? [],
     })),
   }));
 
@@ -107,7 +129,7 @@ export default async function TravelsPage() {
           lng: d.cityLng ?? d.countryLng,
           arrivedOn: d.arrivedOn,
           leftOn: d.leftOn,
-          urls: d.urls,
+          urls: hotelsByDest.get(d.id) ?? [],
         }))
         .filter((d) => d.lat != null && d.lng != null) as {
         id: number;
