@@ -1,6 +1,14 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
+import { useEffect } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Polyline,
+  useMap,
+} from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -48,7 +56,31 @@ function numberIcon(n: number, color: string) {
   });
 }
 
-export default function TravelRouteMap({ routes }: { routes: TravelRoute[] }) {
+// 表示中の全ピンがちょうど収まる位置・ズームに合わせる
+function FitToStops({ positions }: { positions: [number, number][] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (positions.length === 1) {
+      map.setView(positions[0], 8);
+    } else if (positions.length > 1) {
+      map.fitBounds(L.latLngBounds(positions), { padding: [40, 40] });
+    }
+    // 初期表示時に一度だけ合わせる(手動操作を上書きしない)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map]);
+  return null;
+}
+
+export default function TravelRouteMap({
+  routes,
+  fitToStops = false,
+}: {
+  routes: TravelRoute[];
+  fitToStops?: boolean;
+}) {
+  const allPositions = routes.flatMap((r) =>
+    r.stops.map((s) => [s.lat, s.lng] as [number, number]),
+  );
   return (
     <MapContainer
       center={[30, 90]}
@@ -56,6 +88,9 @@ export default function TravelRouteMap({ routes }: { routes: TravelRoute[] }) {
       scrollWheelZoom
       className="z-0 h-96 w-full rounded-2xl"
     >
+      {fitToStops && allPositions.length > 0 && (
+        <FitToStops positions={allPositions} />
+      )}
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"

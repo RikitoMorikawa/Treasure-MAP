@@ -109,7 +109,7 @@ export default async function TravelDetailPage({
             🗺 経路
           </h2>
           <div className="overflow-hidden rounded-2xl border-2 border-sky-200 shadow-md">
-            <TravelRouteMap routes={routes} />
+            <TravelRouteMap routes={routes} fitToStops />
           </div>
         </section>
       )}
