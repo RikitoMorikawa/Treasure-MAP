@@ -45,10 +45,12 @@ export function TripCalendar({ travel }: { travel: CalendarTravel }) {
   };
 
   return (
-    <div className="rounded-2xl border-2 border-sky-200 bg-white p-5 shadow-md">
-      <div
-        className={`grid gap-4 ${months.length > 1 ? "sm:grid-cols-2" : ""}`}
-      >
+    <div className="rounded-2xl border-2 border-sky-200 bg-white p-4 shadow-md sm:p-5">
+      {/* モバイルは横スクロールでセル幅を確保し、都市名の見切れを防ぐ */}
+      <div className="-mx-1 overflow-x-auto px-1 sm:mx-0 sm:overflow-visible sm:px-0">
+        <div
+          className={`grid min-w-[600px] gap-4 sm:min-w-0 ${months.length > 1 ? "sm:grid-cols-2" : ""}`}
+        >
         {months.map((month) => {
           const [year, mon] = month.split("-").map(Number);
           const firstWeekday = new Date(
@@ -120,6 +122,7 @@ export function TripCalendar({ travel }: { travel: CalendarTravel }) {
             </div>
           );
         })}
+        </div>
       </div>
     </div>
   );

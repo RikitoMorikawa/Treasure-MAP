@@ -9,7 +9,6 @@ import {
   travelDestinations,
   travels,
 } from "@/db/schema";
-import { deleteTravel } from "@/app/actions";
 import { TravelCalendar } from "./calendar";
 import { TravelsOverview } from "./overview";
 import { DestinationLines } from "./destination-lines";
@@ -238,15 +237,6 @@ export default async function TravelsPage() {
                   >
                     編集
                   </Link>
-                  <form action={deleteTravel}>
-                    <input type="hidden" name="id" value={t.id} />
-                    <button
-                      type="submit"
-                      className="rounded-full px-2 py-1 text-xs text-slate-500 transition hover:bg-rose-50 hover:text-rose-500"
-                    >
-                      削除
-                    </button>
-                  </form>
                 </div>
               </li>
             ))}

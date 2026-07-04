@@ -120,7 +120,7 @@ export function dayEvents(t: CalendarTravel, date: string): DayEvent[] {
 // ホバーで表示する日別詳細ポップアップ(年間・旅程カレンダー共用)
 export function DayPopup({ date, travels }: { date: string; travels: CalendarTravel[] }) {
   return (
-    <div className="pointer-events-auto absolute bottom-full left-1/2 z-30 mb-1.5 hidden w-60 max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-xl sm:w-72 border-2 border-sky-200 bg-white p-3 text-left shadow-xl group-hover:block">
+    <div className="pointer-events-auto fixed inset-x-3 bottom-3 z-50 hidden rounded-xl border-2 border-sky-200 bg-white p-3 text-left shadow-xl group-hover:block sm:absolute sm:inset-x-auto sm:bottom-full sm:left-1/2 sm:z-30 sm:mb-1.5 sm:w-72 sm:-translate-x-1/2">
       <p className="mb-1.5 text-xs font-extrabold text-slate-700">
         📅 {date.replace(/-/g, "/")}
       </p>
