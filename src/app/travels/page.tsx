@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { cities, countries, travelDestinations, travels } from "@/db/schema";
 import { deleteTravel } from "@/app/actions";
 import { TravelCalendar } from "./calendar";
-import { TravelRouteMap } from "./client-widgets";
+import { TravelsOverview } from "./overview";
 
 export const dynamic = "force-dynamic";
 
@@ -141,74 +141,12 @@ export default async function TravelsPage() {
         </Link>
       </div>
 
-      <section className="space-y-3">
-        <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
-          📊 旅の記録
-        </h2>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="rounded-2xl border-2 border-sky-200 bg-white p-4 text-center shadow-md">
-            <p className="text-xs font-semibold text-slate-500">✈️ 旅行回数</p>
-            <p className="mt-1 text-3xl font-extrabold text-sky-600">
-              {rows.length}
-              <span className="ml-1 text-sm font-semibold text-slate-400">
-                回
-              </span>
-            </p>
-          </div>
-          <div className="rounded-2xl border-2 border-sky-200 bg-white p-4 text-center shadow-md">
-            <p className="text-xs font-semibold text-slate-500">🌍 訪問国数</p>
-            <p className="mt-1 text-3xl font-extrabold text-sky-600">
-              {countryStats.length}
-              <span className="ml-1 text-sm font-semibold text-slate-400">
-                ヶ国
-              </span>
-            </p>
-          </div>
-          <div className="rounded-2xl border-2 border-sky-200 bg-white p-4 text-center shadow-md">
-            <p className="text-xs font-semibold text-slate-500">
-              🏙 訪問都市数
-            </p>
-            <p className="mt-1 text-3xl font-extrabold text-sky-600">
-              {cityCount}
-              <span className="ml-1 text-sm font-semibold text-slate-400">
-                都市
-              </span>
-            </p>
-          </div>
-        </div>
-        {countryStats.length > 0 && (
-          <div className="rounded-2xl border-2 border-sky-200 bg-white p-4 shadow-md">
-            <p className="mb-2 text-xs font-semibold text-slate-500">
-              国ごとの訪問回数
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {countryStats.map((c) => (
-                <span
-                  key={c.name}
-                  className="rounded-full bg-gradient-to-r from-sky-100 to-blue-100 px-3 py-1 text-sm font-semibold text-sky-700"
-                >
-                  {c.name}
-                  <span className="ml-1.5 rounded-full bg-sky-500 px-1.5 py-0.5 text-xs font-bold text-white">
-                    ×{c.count}
-                  </span>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">
-          🗺 旅の経路マップ
-          <span className="ml-2 rounded-full bg-sky-500 px-2.5 py-0.5 text-xs font-bold text-white">
-            {routes.length}旅
-          </span>
-        </h2>
-        <div className="overflow-hidden rounded-2xl border-2 border-sky-200 shadow-md">
-          <TravelRouteMap routes={routes} />
-        </div>
-      </section>
+      <TravelsOverview
+        travelCount={rows.length}
+        cityCount={cityCount}
+        countryStats={countryStats}
+        routes={routes}
+      />
 
       <section className="space-y-3">
         <h2 className="border-l-4 border-sky-500 pl-3 font-bold text-slate-800">

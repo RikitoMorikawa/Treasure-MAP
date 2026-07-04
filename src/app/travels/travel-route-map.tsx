@@ -72,12 +72,31 @@ function FitToStops({ positions }: { positions: [number, number][] }) {
   return null;
 }
 
+export type MapFocus = { seq: number; positions: [number, number][] };
+
+// 国チップのクリック等で指定された範囲へズームする(seq が変わるたびに実行)
+function FocusOn({ focus }: { focus: MapFocus | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!focus || focus.positions.length === 0) return;
+    if (focus.positions.length === 1) {
+      map.flyTo(focus.positions[0], 6);
+    } else {
+      map.flyToBounds(L.latLngBounds(focus.positions), { padding: [40, 40] });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus?.seq]);
+  return null;
+}
+
 export default function TravelRouteMap({
   routes,
   fitToStops = false,
+  focus = null,
 }: {
   routes: TravelRoute[];
   fitToStops?: boolean;
+  focus?: MapFocus | null;
 }) {
   const allPositions = routes.flatMap((r) =>
     r.stops.map((s) => [s.lat, s.lng] as [number, number]),
@@ -92,6 +111,7 @@ export default function TravelRouteMap({
       {fitToStops && allPositions.length > 0 && (
         <FitToStops positions={allPositions} />
       )}
+      <FocusOn focus={focus} />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
