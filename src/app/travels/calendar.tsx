@@ -117,20 +117,67 @@ export function dayEvents(t: CalendarTravel, date: string): DayEvent[] {
   return events;
 }
 
+// ホバーで表示する日別詳細ポップアップ
+function DayPopup({ date, travels }: { date: string; travels: CalendarTravel[] }) {
+  return (
+    <div className="pointer-events-auto absolute bottom-full left-1/2 z-30 mb-1.5 hidden w-72 -translate-x-1/2 rounded-xl border-2 border-sky-200 bg-white p-3 text-left shadow-xl group-hover:block">
+      <p className="mb-1.5 text-xs font-extrabold text-slate-700">
+        📅 {date.replace(/-/g, "/")}
+      </p>
+      <div className="space-y-2">
+        {travels.map((t) => {
+          const events = dayEvents(t, date);
+          return (
+            <div key={t.id}>
+              <p className="text-xs font-bold text-slate-700">
+                ✈️ {t.title}
+                <span className="ml-1.5 font-semibold text-slate-400">
+                  {t.departedOn}
+                  {travelEnd(t) !== t.departedOn ? ` 〜 ${travelEnd(t)}` : ""}
+                </span>
+              </p>
+              {events.length > 0 ? (
+                <ul className="mt-0.5 space-y-0.5">
+                  {events.map((e, i) => (
+                    <li key={i} className="text-xs text-slate-600">
+                      {e.text}
+                      {e.urls.map((u, ui) => (
+                        <a
+                          key={ui}
+                          href={u}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-1.5 inline-flex items-center gap-0.5 rounded-full bg-sky-100 px-1.5 py-0.5 text-[10px] font-semibold text-sky-700 no-underline transition hover:bg-sky-200"
+                        >
+                          🔗 {urlHost(u)}
+                        </a>
+                      ))}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-0.5 text-xs text-slate-500">
+                  行き先: {t.destinationText}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function MiniMonth({
   year,
   mon,
   travels,
   today,
-  selected,
-  onSelect,
 }: {
   year: number;
   mon: number;
   travels: CalendarTravel[];
   today: string;
-  selected: string | null;
-  onSelect: (date: string) => void;
 }) {
   const month = `${year}-${pad(mon)}`;
   const firstWeekday = new Date(Date.UTC(year, mon - 1, 1)).getUTCDay();
@@ -169,33 +216,19 @@ function MiniMonth({
           );
           const isToday = dateStr === today;
           const covered = dayTravels.length > 0;
-          const isSelected = dateStr === selected;
           return (
-            <button
-              key={i}
-              type="button"
-              disabled={!covered}
-              onClick={() => onSelect(dateStr)}
-              title={
-                covered
-                  ? dayTravels
-                      .map(
-                        (t) =>
-                          `✈️ ${t.title}(${t.destinationText})${t.departedOn}〜${travelEnd(t)}`,
-                      )
-                      .join("\n")
-                  : undefined
-              }
-              className={`mx-auto flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
-                covered
-                  ? "cursor-pointer bg-gradient-to-br from-sky-400 to-blue-500 font-bold text-white transition hover:scale-125"
-                  : "text-slate-500"
-              } ${isToday ? "ring-2 ring-amber-400" : ""} ${
-                isSelected ? "scale-125 ring-2 ring-rose-400" : ""
-              }`}
-            >
-              {day}
-            </button>
+            <span key={i} className="group relative">
+              <span
+                className={`mx-auto flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
+                  covered
+                    ? "cursor-pointer bg-gradient-to-br from-sky-400 to-blue-500 font-bold text-white transition group-hover:scale-125"
+                    : "text-slate-500"
+                } ${isToday ? "ring-2 ring-amber-400" : ""}`}
+              >
+                {day}
+              </span>
+              {covered && <DayPopup date={dateStr} travels={dayTravels} />}
+            </span>
           );
         })}
       </div>
@@ -211,7 +244,6 @@ export function TravelCalendar({
   initialYear: number;
 }) {
   const [year, setYear] = useState(initialYear);
-  const [selected, setSelected] = useState<string | null>(null);
 
   const today = new Date().toLocaleDateString("en-CA", {
     timeZone: "Asia/Tokyo",
@@ -225,12 +257,6 @@ export function TravelCalendar({
   const yearTravels = travels.filter(
     (t) => t.departedOn <= yearEnd && travelEnd(t) >= yearStart,
   );
-
-  const selectedTravels = selected
-    ? travels.filter(
-        (t) => t.departedOn <= selected && selected <= travelEnd(t),
-      )
-    : [];
 
   const navBtn =
     "rounded-full px-3 py-1 text-sm font-bold text-sky-500 transition hover:bg-sky-100";
@@ -272,73 +298,9 @@ export function TravelCalendar({
             mon={i + 1}
             travels={yearTravels}
             today={today}
-            selected={selected}
-            onSelect={(d) => setSelected((cur) => (cur === d ? null : d))}
           />
         ))}
       </div>
-
-      {selected && selectedTravels.length > 0 && (
-        <div className="mt-4 rounded-xl border-2 border-rose-200 bg-rose-50/50 p-4">
-          <div className="mb-2 flex items-center justify-between">
-            <h4 className="text-sm font-extrabold text-slate-700">
-              📅 {selected.replace(/-/g, "/")} の予定
-            </h4>
-            <button
-              type="button"
-              onClick={() => setSelected(null)}
-              className="rounded-full px-2 py-0.5 text-xs font-bold text-slate-400 transition hover:bg-white hover:text-rose-500"
-            >
-              ✕ 閉じる
-            </button>
-          </div>
-          <div className="space-y-3">
-            {selectedTravels.map((t) => {
-              const events = dayEvents(t, selected);
-              return (
-                <div key={t.id} className="rounded-lg bg-white p-3 shadow-sm">
-                  <p className="text-sm font-bold text-slate-700">
-                    ✈️ {t.title}
-                    <span className="ml-2 text-xs font-semibold text-slate-400">
-                      {t.departedOn}
-                      {travelEnd(t) !== t.departedOn
-                        ? ` 〜 ${travelEnd(t)}`
-                        : ""}
-                    </span>
-                  </p>
-                  {events.length > 0 ? (
-                    <ul className="mt-1.5 space-y-0.5">
-                      {events.map((e, i) => (
-                        <li key={i} className="text-sm text-slate-600">
-                          {e.text}
-                          {e.urls.map((u, ui) => (
-                            <a
-                              key={ui}
-                              href={u}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ml-2 inline-flex items-center gap-0.5 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700 no-underline transition hover:bg-sky-200"
-                            >
-                              🔗 {urlHost(u)}
-                            </a>
-                          ))}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="mt-1.5 text-sm text-slate-500">
-                      行き先: {t.destinationText}
-                      <span className="ml-1 text-xs text-slate-400">
-                        (都市ごとの到着日・出発日を入れると、この日の滞在・移動が表示されます)
-                      </span>
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {yearTravels.length > 0 && (
         <ul className="mt-4 space-y-1 border-t border-sky-100 pt-3">
